@@ -8,7 +8,6 @@
 
 import { Node } from './node';
 import { Edge, EdgeType } from './edge';
-import { GraphSerializer } from './serializer';
 
 export interface GraphConfig {
   id?: string;
@@ -139,7 +138,7 @@ export class Graph {
     const inDegree = new Map<string, number>();
     
     // 初始化入度
-    this.nodes.forEach((node, id) => {
+    this.nodes.forEach((_node, id) => {
       inDegree.set(id, this.getInEdges(id).length);
     });
     

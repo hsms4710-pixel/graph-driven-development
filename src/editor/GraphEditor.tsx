@@ -42,13 +42,12 @@ interface GraphEditorProps {
 }
 
 export default function GraphEditor({ graph: initialGraph, onGraphChange }: GraphEditorProps) {
-  const [graph, setGraph] = useState<Graph>(
+  const [graph] = useState<Graph>(
     initialGraph || new Graph({ name: 'New Project' })
   );
   
   const [nodes, setNodes, onNodesChange] = useNodesState<RFNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<RFEdge>([]);
-  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   
   // 同步图数据到 React Flow
   const syncGraphToFlow = useCallback((g: Graph) => {
@@ -87,13 +86,10 @@ export default function GraphEditor({ graph: initialGraph, onGraphChange }: Grap
       onNodesChange(changes);
       
       // 同步变化到图
-      setGraph(prevGraph => {
-        const newGraph = GraphSerializer.fromReactFlow(nodes, edges);
-        if (onGraphChange) {
-          onGraphChange(newGraph);
-        }
-        return newGraph;
-      });
+      const newGraph = GraphSerializer.fromReactFlow(nodes as any, edges as any);
+      if (onGraphChange) {
+        onGraphChange(newGraph);
+      }
     },
     [nodes, edges, onNodesChange, onGraphChange]
   );
@@ -104,13 +100,10 @@ export default function GraphEditor({ graph: initialGraph, onGraphChange }: Grap
       onEdgesChange(changes);
       
       // 同步变化到图
-      setGraph(prevGraph => {
-        const newGraph = GraphSerializer.fromReactFlow(nodes, edges);
-        if (onGraphChange) {
-          onGraphChange(newGraph);
-        }
-        return newGraph;
-      });
+      const newGraph = GraphSerializer.fromReactFlow(nodes as any, edges as any);
+      if (onGraphChange) {
+        onGraphChange(newGraph);
+      }
     },
     [nodes, edges, onEdgesChange, onGraphChange]
   );
@@ -128,20 +121,17 @@ export default function GraphEditor({ graph: initialGraph, onGraphChange }: Grap
       }, prevEdges));
       
       // 更新图
-      setGraph(prevGraph => {
-        const newEdge = new Edge({
-          from: params.source!,
-          to: params.target!,
-          type: 'depends_on',
-        });
-        prevGraph.addEdge(newEdge);
-        if (onGraphChange) {
-          onGraphChange(prevGraph);
-        }
-        return prevGraph;
+      const newEdge = new Edge({
+        from: params.source!,
+        to: params.target!,
+        type: 'depends_on',
       });
+      graph.addEdge(newEdge);
+      if (onGraphChange) {
+        onGraphChange(graph);
+      }
     },
-    [setEdges, onGraphChange]
+    [setEdges, graph, onGraphChange]
   );
   
   // 添加新节点
@@ -205,7 +195,7 @@ export default function GraphEditor({ graph: initialGraph, onGraphChange }: Grap
           onNodesChange={handleNodesChange}
           onEdgesChange={handleEdgesChange}
           onConnect={handleConnect}
-          onInit={setReactFlowInstance}
+          onInit={() => {}}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           defaultEdgeOptions={defaultEdgeOptions}

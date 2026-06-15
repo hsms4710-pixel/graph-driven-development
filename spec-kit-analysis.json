@@ -1,0 +1,290 @@
+{
+  "project": "GitHub Spec Kit",
+  "layers": {
+    "L1_Constitution": {
+      "name": "项目宪法 & 核心原则",
+      "items": [
+        {
+          "id": "L1-001",
+          "title": "规范优先原则",
+          "description": "规格说明(Spec)是主要产物，代码是规格说明的表达形式",
+          "sourceFile": "spec-driven.md"
+        },
+        {
+          "id": "L1-002",
+          "title": "可执行规格说明",
+          "description": "规格说明必须足够精确、完整、无歧义，能够生成可工作的系统",
+          "sourceFile": "spec-driven.md"
+        },
+        {
+          "id": "L1-003",
+          "title": "持续优化",
+          "description": "一致性验证是持续进行的，而不是一次性门控",
+          "sourceFile": "spec-driven.md"
+        },
+        {
+          "id": "L1-004",
+          "title": "研究驱动的上下文",
+          "description": "研究代理在整个规格说明过程中收集关键上下文",
+          "sourceFile": "spec-driven.md"
+        }
+      ]
+    },
+    "L2_TechStack": {
+      "name": "技术栈 & 工具链",
+      "items": [
+        {
+          "id": "L2-001",
+          "title": "Specify CLI",
+          "description": "命令行界面，用于初始化项目并设置 Spec Kit 框架",
+          "sourceFile": "src/specify_cli/"
+        },
+        {
+          "id": "L2-002",
+          "title": "AI 编码助手集成",
+          "description": "支持多种 AI 编码助手的集成框架",
+          "sourceFile": "src/specify_cli/integrations/"
+        },
+        {
+          "id": "L2-003",
+          "title": "工作流引擎",
+          "description": "YAML 定义的工作流执行引擎",
+          "sourceFile": "src/specify_cli/workflows/"
+        },
+        {
+          "id": "L2-004",
+          "title": "模板系统",
+          "description": "规格说明、计划、任务的模板定义",
+          "sourceFile": "templates/"
+        }
+      ]
+    },
+    "L3_Epic": {
+      "name": "核心功能范围 (Epic)",
+      "items": [
+        {
+          "id": "L3-001",
+          "title": "/speckit.specify 命令",
+          "description": "将简单功能描述转换为完整的结构化规格说明",
+          "sourceFile": "templates/spec-template.md"
+        },
+        {
+          "id": "L3-002",
+          "title": "/speckit.plan 命令",
+          "description": "从功能规格说明创建全面的实施计划",
+          "sourceFile": "templates/plan-template.md"
+        },
+        {
+          "id": "L3-003",
+          "title": "/speckit.tasks 命令",
+          "description": "分析计划和相关设计文档，生成可执行的任务列表",
+          "sourceFile": "templates/tasks-template.md"
+        },
+        {
+          "id": "L3-004",
+          "title": "工作流系统",
+          "description": "基于 YAML 定义的工作流执行引擎",
+          "sourceFile": "workflows/"
+        }
+      ]
+    },
+    "L4_Story": {
+      "name": "用户故事 (Story)",
+      "items": [
+        {
+          "id": "L4-001",
+          "title": "产品管理者的规格说明流程",
+          "description": "产品管理者更新验收标准，实施计划自动标记受影响的技术决策",
+          "sourceFile": "spec-driven.md"
+        },
+        {
+          "id": "L4-002",
+          "title": "架构师的规格说明流程",
+          "description": "架构师发现更好的模式，PRD 更新以反映新可能性",
+          "sourceFile": "spec-driven.md"
+        },
+        {
+          "id": "L4-003",
+          "title": "开发者的工作流集成",
+          "description": "开发者使用偏好的 AI 工具，同时保持一致的项目结构和开发实践",
+          "sourceFile": "AGENTS.md"
+        },
+        {
+          "id": "L4-004",
+          "title": "团队协作的规格说明管理",
+          "description": "团队评审的规格说明被表达和版本化，创建在分支中，合并",
+          "sourceFile": "spec-driven.md"
+        }
+      ]
+    },
+    "L5_Task": {
+      "name": "具体任务 (Task)",
+      "items": [
+        {
+          "id": "L5-001",
+          "title": "初始化项目结构",
+          "description": "使用 specify init 创建项目",
+          "sourceFile": "src/specify_cli/"
+        },
+        {
+          "id": "L5-002",
+          "title": "创建功能规格说明",
+          "description": "使用 /speckit.specify 命令从描述生成规格说明",
+          "sourceFile": "templates/spec-template.md"
+        },
+        {
+          "id": "L5-003",
+          "title": "生成实施计划",
+          "description": "使用 /speckit.plan 命令从规格说明生成计划",
+          "sourceFile": "templates/plan-template.md"
+        },
+        {
+          "id": "L5-004",
+          "title": "分解任务",
+          "description": "使用 /speckit.tasks 命令从计划生成任务列表",
+          "sourceFile": "templates/tasks-template.md"
+        },
+        {
+          "id": "L5-005",
+          "title": "执行任务生成代码",
+          "description": "使用 AI 助手执行任务列表中的每个任务",
+          "sourceFile": "AGENTS.md"
+        }
+      ]
+    }
+  },
+  "connections": [
+    {
+      "from": "L1-001",
+      "to": "L2-001",
+      "type": "refines",
+      "description": "Specify CLI 实现规范优先原则"
+    },
+    {
+      "from": "L1-002",
+      "to": "L2-004",
+      "type": "implements",
+      "description": "模板系统提供可执行规格说明的载体"
+    },
+    {
+      "from": "L2-001",
+      "to": "L2-002",
+      "type": "contains",
+      "description": "CLI 包含 AI 集成模块"
+    },
+    {
+      "from": "L2-001",
+      "to": "L2-003",
+      "type": "contains",
+      "description": "CLI 包含工作流引擎"
+    },
+    {
+      "from": "L3-001",
+      "to": "L2-004",
+      "type": "uses",
+      "description": "specify 命令使用 spec-template.md"
+    },
+    {
+      "from": "L3-002",
+      "to": "L2-004",
+      "type": "uses",
+      "description": "plan 命令使用 plan-template.md"
+    },
+    {
+      "from": "L3-003",
+      "to": "L2-004",
+      "type": "uses",
+      "description": "tasks 命令使用 tasks-template.md"
+    },
+    {
+      "from": "L3-004",
+      "to": "L2-003",
+      "type": "implements",
+      "description": "工作流系统实现工作流引擎"
+    },
+    {
+      "from": "L4-001",
+      "to": "L3-001",
+      "type": "uses",
+      "description": "产品管理者使用 specify 命令"
+    },
+    {
+      "from": "L4-002",
+      "to": "L3-001",
+      "type": "uses",
+      "description": "架构师使用 specify 命令"
+    },
+    {
+      "from": "L4-003",
+      "to": "L3-001",
+      "type": "uses",
+      "description": "开发者使用 specify 命令"
+    },
+    {
+      "from": "L4-003",
+      "to": "L3-002",
+      "type": "uses",
+      "description": "开发者使用 plan 命令"
+    },
+    {
+      "from": "L4-003",
+      "to": "L3-003",
+      "type": "uses",
+      "description": "开发者使用 tasks 命令"
+    },
+    {
+      "from": "L4-004",
+      "to": "L3-001",
+      "type": "uses",
+      "description": "团队使用 specify 命令"
+    },
+    {
+      "from": "L5-001",
+      "to": "L3-001",
+      "type": "implements",
+      "description": "初始化任务实现 specify 命令"
+    },
+    {
+      "from": "L5-002",
+      "to": "L3-001",
+      "type": "implements",
+      "description": "创建规格说明任务实现 specify 命令"
+    },
+    {
+      "from": "L5-003",
+      "to": "L3-002",
+      "type": "implements",
+      "description": "生成计划任务实现 plan 命令"
+    },
+    {
+      "from": "L5-004",
+      "to": "L3-003",
+      "type": "implements",
+      "description": "分解任务实现 tasks 命令"
+    },
+    {
+      "from": "L5-005",
+      "to": "L3-003",
+      "type": "implements",
+      "description": "执行任务实现 tasks 命令"
+    },
+    {
+      "from": "L5-002",
+      "to": "L5-003",
+      "type": "depends_on",
+      "description": "生成计划依赖于规格说明"
+    },
+    {
+      "from": "L5-003",
+      "to": "L5-004",
+      "type": "depends_on",
+      "description": "分解任务依赖于计划"
+    },
+    {
+      "from": "L5-004",
+      "to": "L5-005",
+      "type": "depends_on",
+      "description": "执行任务依赖于任务列表"
+    }
+  ]
+}

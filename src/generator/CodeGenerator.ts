@@ -52,7 +52,34 @@ export class CodeGenerator {
     // React 组件模板
     this.registerTemplate({
       name: 'react-component',
-      content: `import React from 'react';
+      content: this.getReactComponentTemplate(),
+      language: 'typescript'
+    });
+    
+    // API 路由模板
+    this.registerTemplate({
+      name: 'api-route',
+      content: this.getApiRouteTemplate(),
+      language: 'typescript'
+    });
+    
+    // 数据库模型模板
+    this.registerTemplate({
+      name: 'database-model',
+      content: this.getDatabaseModelTemplate(),
+      language: 'typescript'
+    });
+    
+    // 认证模块模板
+    this.registerTemplate({
+      name: 'auth-module',
+      content: this.getAuthModuleTemplate(),
+      language: 'typescript'
+    });
+  }
+  
+  private getReactComponentTemplate(): string {
+    return `import React from 'react';
 
 interface Props {
   // TODO: Define props
@@ -66,14 +93,11 @@ const {{label}}: React.FC<Props> = (props) => {
   );
 };
 
-export default {{label}};`,
-      language: 'typescript'
-    });
-    
-    // API 路由模板
-    this.registerTemplate({
-      name: 'api-route',
-      content: `import { NextApiRequest, NextApiResponse } from 'next';
+export default {{label}};`;
+  }
+  
+  private getApiRouteTemplate(): string {
+    return `import { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(
   req: NextApiRequest,
@@ -92,7 +116,7 @@ export default async function handler(
       
     default:
       res.setHeader('Allow', ['GET', 'POST']);
-      res.status(405).end(`Method ${req.method} Not Allowed`);
+      res.status(405).end('Method ' + req.method + ' Not Allowed');
   }
 }
 
@@ -100,14 +124,11 @@ export const config = {
   api: {
     bodyParser: false,
   },
-};`,
-      language: 'typescript'
-    });
-    
-    // 数据库模型模板
-    this.registerTemplate({
-      name: 'database-model',
-      content: `import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+};`;
+  }
+  
+  private getDatabaseModelTemplate(): string {
+    return `import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('{{label}}')
 export class {{label}} {
@@ -122,14 +143,11 @@ export class {{label}} {
 
   // TODO: Add fields
 }
-`,
-      language: 'typescript'
-    });
-    
-    // 认证模块模板
-    this.registerTemplate({
-      name: 'auth-module',
-      content: `import { NextAuthOptions } from 'next-auth';
+`;
+  }
+  
+  private getAuthModuleTemplate(): string {
+    return `import { NextAuthOptions } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 
 export const authOptions: NextAuthOptions = {
@@ -169,9 +187,7 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
-`,
-      language: 'typescript'
-    });
+`;
   }
   
   /**
@@ -200,7 +216,7 @@ export const authOptions: NextAuthOptions = {
     const layers = TopologySorter.sortByLayers(graph);
     
     if (options.verbose) {
-      console.log(`拓扑排序完成，共 ${layers.length} 层`);
+      console.log('拓扑排序完成，共 ' + layers.length + ' 层');
     }
     
     // 按层生成（每层可以并行）
@@ -208,7 +224,7 @@ export const authOptions: NextAuthOptions = {
       const layer = layers[layerIndex];
       
       if (options.verbose) {
-        console.log(`生成第 ${layerIndex + 1} 层，包含 ${layer.length} 个节点`);
+        console.log('生成第 ' + (layerIndex + 1) + ' 层，包含 ' + layer.length + ' 个节点');
       }
       
       if (options.parallel && layer.length > 1) {
@@ -221,13 +237,14 @@ export const authOptions: NextAuthOptions = {
         );
         
         results.forEach(result => {
-          if (result.error) {
+          const fileResult = result as { path: string; content: string; nodeId: string } | { error: string; nodeId: string };
+          if ('error' in fileResult) {
             errors.push({
-              nodeId: result.nodeId,
-              message: result.error
+              nodeId: fileResult.nodeId,
+              message: fileResult.error
             });
           } else {
-            files.push(result);
+            files.push(fileResult);
           }
         });
       } else {
@@ -268,7 +285,7 @@ export const authOptions: NextAuthOptions = {
     const template = this.getTemplate(templateName);
     
     if (!template) {
-      throw new Error(`No template found for node type: ${node.type}`);
+      throw new Error('No template found for node type: ' + node.type);
     }
     
     // 简单的模板替换
@@ -318,7 +335,7 @@ export const authOptions: NextAuthOptions = {
     const dir = node.properties.directory || 'src';
     const ext = node.properties.extension || '.tsx';
     
-    return `${outputDir}/${dir}/${kebabLabel}${ext}`;
+    return outputDir + '/' + dir + '/' + kebabLabel + ext;
   }
   
   /**

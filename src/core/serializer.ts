@@ -102,7 +102,7 @@ export class GraphSerializer {
           label = value || id;
         } else if (key === 'type') {
           type = value as NodeType;
-        } else if (value) {
+        } else if (value && key) {
           try {
             properties[key] = JSON.parse(value);
           } catch {
