@@ -1,0 +1,162 @@
+{
+  "version": "1.0",
+  "type": "code-graph",
+  "graph": {
+    "id": "graph_1718457600000_abc123",
+    "name": "Simple Todo App",
+    "description": "一个简单的 Todo 应用示例",
+    "nodes": [
+      {
+        "id": "src/auth:AuthContext",
+        "label": "用户认证",
+        "type": "module",
+        "properties": {
+          "description": "处理用户登录、注册、会话管理",
+          "tech": "NextAuth.js",
+          "estimatedLines": 200
+        },
+        "position": { "x": 100, "y": 200 }
+      },
+      {
+        "id": "src/tasks:TaskModel",
+        "label": "任务模型",
+        "type": "module",
+        "properties": {
+          "description": "任务数据模型定义",
+          "tech": "TypeORM",
+          "estimatedLines": 100
+        },
+        "position": { "x": 350, "y": 100 }
+      },
+      {
+        "id": "src/tasks:TaskService",
+        "label": "任务服务",
+        "type": "module",
+        "properties": {
+          "description": "任务 CRUD 操作",
+          "tech": "TypeScript",
+          "estimatedLines": 300
+        },
+        "position": { "x": 350, "y": 200 }
+      },
+      {
+        "id": "src/api:task-routes",
+        "label": "API 路由",
+        "type": "module",
+        "properties": {
+          "description": "任务相关的 API 接口",
+          "tech": "Next.js API Routes",
+          "estimatedLines": 150
+        },
+        "position": { "x": 350, "y": 300 }
+      },
+      {
+        "id": "src/components:TaskList",
+        "label": "任务列表组件",
+        "type": "module",
+        "properties": {
+          "description": "展示任务列表的 UI 组件",
+          "tech": "React, TypeScript",
+          "estimatedLines": 200
+        },
+        "position": { "x": 600, "y": 150 }
+      },
+      {
+        "id": "src/components:TaskForm",
+        "label": "任务表单组件",
+        "type": "module",
+        "properties": {
+          "description": "添加/编辑任务的表单",
+          "tech": "React, TypeScript",
+          "estimatedLines": 150
+        },
+        "position": { "x": 600, "y": 250 }
+      },
+      {
+        "id": "src/app:page",
+        "label": "首页",
+        "type": "module",
+        "properties": {
+          "description": "应用首页，整合所有组件",
+          "tech": "Next.js App Router",
+          "estimatedLines": 100
+        },
+        "position": { "x": 600, "y": 350 }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_1",
+        "from": "src/tasks:TaskService",
+        "to": "src/auth:AuthContext",
+        "type": "depends_on",
+        "label": "需要认证",
+        "properties": {},
+        "weight": 1
+      },
+      {
+        "id": "edge_2",
+        "from": "src/tasks:TaskService",
+        "to": "src/tasks:TaskModel",
+        "type": "depends_on",
+        "label": "操作模型",
+        "properties": {},
+        "weight": 1
+      },
+      {
+        "id": "edge_3",
+        "from": "src/api:task-routes",
+        "to": "src/tasks:TaskService",
+        "type": "depends_on",
+        "label": "调用服务",
+        "properties": {},
+        "weight": 1
+      },
+      {
+        "id": "edge_4",
+        "from": "src/api:task-routes",
+        "to": "src/auth:AuthContext",
+        "type": "depends_on",
+        "label": "验证用户",
+        "properties": {},
+        "weight": 1
+      },
+      {
+        "id": "edge_5",
+        "from": "src/components:TaskList",
+        "to": "src/api:task-routes",
+        "type": "depends_on",
+        "label": "调用 API",
+        "properties": {},
+        "weight": 1
+      },
+      {
+        "id": "edge_6",
+        "from": "src/components:TaskForm",
+        "to": "src/api:task-routes",
+        "type": "depends_on",
+        "label": "调用 API",
+        "properties": {},
+        "weight": 1
+      },
+      {
+        "id": "edge_7",
+        "from": "src/app:page",
+        "to": "src/components:TaskList",
+        "type": "depends_on",
+        "label": "包含组件",
+        "properties": {},
+        "weight": 1
+      },
+      {
+        "id": "edge_8",
+        "from": "src/app:page",
+        "to": "src/components:TaskForm",
+        "type": "depends_on",
+        "label": "包含组件",
+        "properties": {},
+        "weight": 1
+      }
+    ]
+  }
+}
