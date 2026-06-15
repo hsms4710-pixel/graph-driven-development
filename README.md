@@ -1,36 +1,57 @@
 # Graph-Driven Development
 
-> 从想法到代码，用图驱动整个开发流程。
+> Coding Agent 的图驱动开发插件 + 独立 Web UI
 
 Graph-Driven Development (GDD) 是一个创新的开发工具，让你：
 
-- **从零开始**：用自然语言描述想法，AI 提取功能节点，在图上编排设计，一键生成代码
-- **维护已有项目**：索引代码库生成架构图，可视化理解依赖关系，安全修改代码
+- **通过 Agent 对话开发**：与 Claude Code、Codex CLI、CodeBuddy 等 Agent 对话，AI 自动管理项目图谱
+- **独立可视化审查**：完整的 Web UI，可视化查看和编辑项目架构
+- **需求智能澄清**：Brainstorm 引擎自动生成澄清问题
 
 ## 核心特性
 
-### 1. 智能需求提取
+### 1. MCP Server（Agent 插件）
+
+支持 Claude Code、Codex CLI、CodeBuddy、TRAE 等 Agent 平台通过 MCP 协议调用：
+
 ```
-输入: "做一个 Todo App，支持用户登录、任务的增删改查"
-输出: 功能节点图 (用户认证 → 任务CRUD → 数据存储 → UI界面)
+用户需求 → [Coding Agent + GDD MCP] → 可运行代码
+              ↑
+         图谱可视化 + 需求澄清 + 依赖管理
 ```
 
-### 2. 可视化图编辑
-- 拖拽节点调整架构
-- 连线表示依赖关系
-- 实时预览代码量估算
+**12 个 MCP 工具**：
+- `gdd_create_graph` - 创建图谱项目
+- `gdd_load_graph` - 加载图谱或从代码索引生成
+- `gdd_add_node` - 添加节点
+- `gdd_update_node` - 更新节点
+- `gdd_delete_node` - 删除节点
+- `gdd_add_edge` - 添加边
+- `gdd_delete_edge` - 删除边
+- `gdd_get_pending_clarifications` - 获取待澄清问题
+- `gdd_submit_clarification_answer` - 提交澄清答案
+- `gdd_get_dependency_impact` - 获取依赖影响
+- `gdd_export_graph` - 导出图谱（JSON/Markdown/Mermaid）
+- `gdd_list_graphs` - 列出所有图谱
 
-### 3. 拓扑排序并行生成
-- 按依赖顺序并行生成代码
-- 速度提升 3-4x (RPG 论文验证)
-- 自动处理接口契约
+### 2. 独立 Web UI
 
-### 4. 变更影响分析
-- 选中函数 → 高亮所有下游调用者
-- 风险评分：基于调用链深度 + 测试覆盖度
-- 改图 → 代码自动增量更新
+- **5 层架构可视化**：L1 宪法 → L2 技术栈 → L3 Epic → L4 Story → L5 Task
+- **React Flow 图谱编辑器**：拖拽节点、连线表示依赖
+- **Brainstorm 交互**：需求澄清问题生成和回答
+- **项目管理**：创建、编辑、删除、导出项目
+
+### 3. 实时同步
+
+- **WebSocket 实时通信**：图谱变更实时推送到所有客户端
+- **Agent ↔ Web UI 同步**：Agent 操作的图谱变更自动显示在 Web UI
 
 ## 快速开始
+
+### 环境要求
+
+- Node.js 18+
+- npm 9+
 
 ### 安装
 
@@ -38,73 +59,132 @@ Graph-Driven Development (GDD) 是一个创新的开发工具，让你：
 npm install
 ```
 
-### 从零开发
+### 启动开发环境
 
 ```bash
-# 启动 Web 界面
-npm run dev
+# 同时启动后端和前端
+npm start
 
-# 或使用 CLI
-npx gdd new "做一个 Todo App"
+# 或分别启动
+npm run server  # 后端 (端口 3001)
+npm run dev     # 前端 (端口 5173)
 ```
 
-### 索引已有代码库
+### 启动 MCP Server（供 Agent 调用）
 
 ```bash
-# 索引项目
-npx gdd index ./your-project
-
-# 打开可视化编辑器
-npx gdd open
+npm run mcp
 ```
 
-## 项目结构
+## 使用方式
 
-```
-graph-driven-development/
-├── src/
-│   ├── core/        # 图谱引擎核心
-│   │   ├── graph.ts       # 图数据结构
-│   │   ├── node.ts        # 节点定义
-│   │   ├── edge.ts        # 边定义
-│   │   └── serializer.ts  # 序列化/反序列化
-│   ├── editor/      # 图可视化编辑器
-│   │   ├── GraphEditor.tsx
-│   │   ├── NodeComponent.tsx
-│   │   └── EdgeComponent.tsx
-│   ├── generator/   # 代码生成器
-│   │   ├── CodeGenerator.ts
-│   │   ├── TopologySorter.ts
-│   │   └── TemplateEngine.ts
-│   ├── indexer/     # 代码库索引器
-│   │   ├── CodeIndexer.ts
-│   │   ├── ASTParser.ts
-│   │   └── DependencyAnalyzer.ts
-│   └── cli/         # 命令行工具
-│       └── index.ts
-├── tests/           # 测试用例
-├── examples/        # 示例项目
-├── docs/            # 文档
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
+### 方式一：通过 Agent 对话
+
+1. 在 Claude Code 中配置 MCP Server：
+```json
+{
+  "mcpServers": {
+    "graph-driven-development": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp/server.ts"]
+    }
+  }
+}
 ```
 
-## 开发路线图
+2. 与 Agent 对话：
+```
+用户: 帮我创建一个电商后台管理系统
+Agent: [调用 gdd_create_graph]
+Agent: [调用 gdd_add_node 添加 L1_Constitution]
+Agent: [调用 gdd_get_pending_clarifications]
+Agent: 请问这个系统的主要用户群体是什么？
+```
 
-- [x] 项目骨架搭建
-- [ ] 图谱引擎核心实现
-- [ ] 图可视化编辑器
-- [ ] 代码生成器
-- [ ] 代码库索引器
-- [ ] VS Code Extension
-- [ ] 团队协作功能
+### 方式二：通过 Web UI
+
+1. 打开浏览器访问 http://localhost:5173
+2. 点击「+ 新建项目」创建项目
+3. 在左侧工具栏选择层级添加节点
+4. 拖拽创建节点间的连接
+5. 点击节点编辑详情
+
+## 5 层架构
+
+| 层级 | 名称 | 说明 | 图标 |
+|------|------|------|------|
+| L1 | Constitution | 项目宪法/原则 | 📜 |
+| L2 | TechStack | 技术栈决策 | 🔧 |
+| L3 | Epic | 功能范围 | 📋 |
+| L4 | Story | 用户故事 | 📝 |
+| L5 | Task | 任务/文件 | ⚡ |
+
+## 边类型
+
+| 类型 | 说明 | 样式 |
+|------|------|------|
+| depends_on | 依赖关系 | 实线红色 |
+| contains | 包含关系 | 虚线绿色 |
+| implements | 实现关系 | 实线橙色 |
+| refines | 细化关系 | 动画紫色 |
+
+## 技术栈
+
+| 组件 | 技术 |
+|------|------|
+| 前端框架 | React 18 |
+| 图谱渲染 | React Flow |
+| 状态管理 | Zustand |
+| 后端框架 | Express |
+| 数据存储 | SQLite (better-sqlite3) |
+| 实时通信 | WebSocket |
+| MCP 协议 | @modelcontextprotocol/sdk |
+
+## 开发计划
+
+### M1（当前）：MCP Server + 后端优化 ✅
+- [x] MCP Server 完整实现（12 个工具）
+- [x] SQLite 数据存储
+- [x] WebSocket 实时同步
+
+### M2：代码索引 + 实时同步
+- [ ] 从代码库生成图谱
+- [ ] 依赖关系分析
+- [ ] 图谱变更实时推送
+
+### M3：Brainstorm 智能化
+- [ ] 动态生成澄清问题
+- [ ] 问题优先级排序
+- [ ] 智能推荐
+
+### M4：多 Agent 平台适配
+- [ ] Claude Code 集成
+- [ ] Codex CLI 集成
+- [ ] CodeBuddy 内置
+- [ ] TRAE 集成
+
+### M5：1.0 正式版
+- [ ] 性能优化
+- [ ] 稳定性提升
+- [ ] 文档完善
+
+## 部署
+
+### 本地部署
+
+```bash
+npm install
+npm start
+```
+
+### 云端部署
+
+前端已部署到 CloudStudio：https://c39ff7e85ae84a6d98e043da78cd0b83.tc-nanjing.share.codebuddy.woa.com
+
+## GitHub
+
+https://github.com/hsms4710-pixel/graph-driven-development
 
 ## 许可证
 
 MIT
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request！
