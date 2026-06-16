@@ -304,7 +304,30 @@ export class ContextAnalyzer {
       'NestJS': ['@nestjs'],
       'Spring': ['spring', 'spring-boot'],
       'Django': ['django'],
-      'Flask': ['flask']
+      'Flask': ['flask'],
+      'Typer': ['typer'],
+      'Rich': ['rich'],
+      'Pydantic': ['pydantic'],
+      'Celery': ['celery'],
+      'SQLAlchemy': ['sqlalchemy'],
+      'Alembic': ['alembic'],
+      'pytest': ['pytest', 'py.test'],
+      'pytest-playwright': ['pytest-playwright'],
+      'httpx': ['httpx'],
+      'aiohttp': ['aiohttp'],
+      'uvicorn': ['uvicorn'],
+      'gunicorn': ['gunicorn'],
+      'redis-py': ['redis'],
+      'pymongo': ['pymongo'],
+      'psycopg': ['psycopg', 'psycopg2'],
+      'mysql-connector': ['mysql-connector', 'mysqlclient'],
+      'Click': ['click'],
+      'Hug': ['hug'],
+      'Falcon': ['falcon'],
+      'Bottle': ['bottle'],
+      'Tornado': ['tornado'],
+      'Sanic': ['sanic'],
+      'Quart': ['quart']
     };
     
     if (!context.dependencies) return;
@@ -546,12 +569,21 @@ export class ContextAnalyzer {
       'Jest': ['jest', '@jest'],
       'Vitest': ['vitest'],
       'Mocha': ['mocha', 'chai'],
-      'PyTest': ['pytest', 'py.test'],
+      'PyTest': ['pytest', 'py.test', 'pytest-playwright'],
       'Jasmine': ['jasmine'],
       'Playwright': ['playwright'],
       'Cypress': ['cypress'],
       'Supertest': ['supertest'],
-      'pytest-playwright': ['pytest-playwright']
+      'unittest': ['unittest'],
+      'nose': ['nose', 'nose2'],
+      'pytest-asyncio': ['pytest-asyncio'],
+      'pytest-cov': ['pytest-cov'],
+      'pytest-html': ['pytest-html'],
+      'pytest-xdist': ['pytest-xdist'],
+      'hypothesis': ['hypothesis'],
+      'factory_boy': ['factory-boy'],
+      'faker': ['faker', 'fake-factory'],
+      'mock': ['mock', 'unittest.mock']
     };
     
     if (!context.dependencies) return undefined;
@@ -572,6 +604,9 @@ export class ContextAnalyzer {
       return 'Vitest';
     }
     if (context.configFiles?.some(f => f.includes('pytest'))) {
+      return 'PyTest';
+    }
+    if (context.configFiles?.some(f => f.includes('setup.cfg') || f.includes('tox.ini'))) {
       return 'PyTest';
     }
     

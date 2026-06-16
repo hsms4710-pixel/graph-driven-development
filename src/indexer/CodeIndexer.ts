@@ -16,6 +16,26 @@ export interface IndexResult {
   nodes: IndexedNode[];
   edges: IndexedEdge[];
   summary: IndexSummary;
+  // 兼容 ContextAnalyzer 的 CodeIndexResult 格式
+  files: FileAnalysis[];
+  dependencies: DependencyInfo[];
+}
+
+export interface FileAnalysis {
+  path: string;
+  language?: string;
+  className?: string;
+  lineCount?: number;
+  commentCount?: number;
+  complexity?: number;
+  isTest?: boolean;
+  isModule?: boolean;
+}
+
+export interface DependencyInfo {
+  name: string;
+  version?: string;
+  type?: 'direct' | 'transitive';
 }
 
 export interface IndexedNode {
@@ -88,6 +108,20 @@ export class CodeIndexer {
     // 4. 生成摘要
     const summary = this.generateSummary(projectInfo.files.length);
     
+    // 5. 构建兼容 ContextAnalyzer 的文件和依赖列表
+    const files: FileAnalysis[] = projectInfo.files.map(f => ({
+      path: f.path,
+      language: f.language,
+      lineCount: 100, // 估算
+      isTest: f.path.includes('.test.') || f.path.includes('.spec.') || f.path.includes('_test.') || f.path.includes('test_'),
+      isModule: f.path.includes('/modules/') || f.path.includes('/lib/')
+    }));
+    
+    const dependencies: DependencyInfo[] = (projectInfo.packageJson?.dependencies || []).map(name => ({
+      name,
+      type: 'direct' as const
+    }));
+    
     console.log('[Indexer] Index complete:', summary.nodesGenerated, 'nodes,', summary.edgesGenerated, 'edges');
     
     return {
@@ -95,7 +129,9 @@ export class CodeIndexer {
       name: path.basename(this.projectPath),
       nodes: this.nodes,
       edges: this.edges,
-      summary
+      summary,
+      files,
+      dependencies
     };
   }
   
@@ -157,6 +193,7 @@ export class CodeIndexer {
   }
   
   private findPackageJson(): PackageJsonInfo | null {
+    // 检查 Node.js 项目
     const pkgPath = path.join(this.projectPath, 'package.json');
     if (fs.existsSync(pkgPath)) {
       try {
@@ -172,7 +209,179 @@ export class CodeIndexer {
         return null;
       }
     }
+    
+    // 检查 Python 项目
+    return this.findPythonDependencies();
+  }
+  
+  private findPythonDependencies(): PackageJsonInfo | null {
+    // 优先级: pyproject.toml > requirements.txt > poetry.lock > Pipfile
+    
+    // 1. pyproject.toml
+    const pyprojectPath = path.join(this.projectPath, 'pyproject.toml');
+    if (fs.existsSync(pyprojectPath)) {
+      const deps = this.parsePyprojectToml(pyprojectPath);
+      if (deps.length > 0) {
+        return {
+          name: 'python-project',
+          version: '0.0.0',
+          description: 'Python project with pyproject.toml',
+          dependencies: deps,
+          devDependencies: []
+        };
+      }
+    }
+    
+    // 2. requirements.txt
+    const reqPath = path.join(this.projectPath, 'requirements.txt');
+    if (fs.existsSync(reqPath)) {
+      const deps = this.parseRequirementsTxt(reqPath);
+      if (deps.length > 0) {
+        return {
+          name: 'python-project',
+          version: '0.0.0',
+          description: 'Python project with requirements.txt',
+          dependencies: deps,
+          devDependencies: []
+        };
+      }
+    }
+    
+    // 3. Poetry
+    const poetryPath = path.join(this.projectPath, 'poetry.lock');
+    if (fs.existsSync(poetryPath)) {
+      const deps = this.parsePoetryLock(poetryPath);
+      if (deps.length > 0) {
+        return {
+          name: 'python-project',
+          version: '0.0.0',
+          description: 'Python project with Poetry',
+          dependencies: deps,
+          devDependencies: []
+        };
+      }
+    }
+    
+    // 4. Pipfile
+    const pipfilePath = path.join(this.projectPath, 'Pipfile');
+    if (fs.existsSync(pipfilePath)) {
+      const deps = this.parsePipfile(pipfilePath);
+      if (deps.length > 0) {
+        return {
+          name: 'python-project',
+          version: '0.0.0',
+          description: 'Python project with Pipfile',
+          dependencies: deps,
+          devDependencies: []
+        };
+      }
+    }
+    
     return null;
+  }
+  
+  private parsePyprojectToml(filePath: string): string[] {
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const deps: string[] = [];
+      
+      // 简单解析 toml 格式的依赖
+      const lines = content.split('\n');
+      let inDeps = false;
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('[')) {
+          inDeps = false;
+        }
+        
+        if (trimmed.includes('dependencies')) {
+          inDeps = true;
+          continue;
+        }
+        
+        if (inDeps && trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('[')) {
+          // 解析 "fastapi = \"^0.100.0\"" 或 '"fastapi"'
+          const match = trimmed.match(/["']([a-zA-Z0-9_-]+)["']/);
+          if (match) {
+            deps.push(match[1].toLowerCase());
+          }
+        }
+      }
+      
+      return deps;
+    } catch {
+      return [];
+    }
+  }
+  
+  private parseRequirementsTxt(filePath: string): string[] {
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const lines = content.split('\n');
+      const deps: string[] = [];
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('-')) {
+          continue;
+        }
+        
+        // 解析 "fastapi==0.100.0" 或 "fastapi>=0.100.0"
+        const match = trimmed.match(/^([a-zA-Z0-9_-]+)[=<>!]?/);
+        if (match) {
+          deps.push(match[1].toLowerCase());
+        }
+      }
+      
+      return deps;
+    } catch {
+      return [];
+    }
+  }
+  
+  private parsePoetryLock(filePath: string): string[] {
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const lines = content.split('\n');
+      const deps: string[] = [];
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('name = \"')) {
+          const match = trimmed.match(/name = \"([^\"]+)\"/);
+          if (match) {
+            deps.push(match[1].toLowerCase());
+          }
+        }
+      }
+      
+      return deps;
+    } catch {
+      return [];
+    }
+  }
+  
+  private parsePipfile(filePath: string): string[] {
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const lines = content.split('\n');
+      const deps: string[] = [];
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('"') && trimmed.includes('=')) {
+          const match = trimmed.match(/\"([a-zA-Z0-9_-]+)\"/);
+          if (match) {
+            deps.push(match[1].toLowerCase());
+          }
+        }
+      }
+      
+      return deps;
+    } catch {
+      return [];
+    }
   }
   
   private getLanguageFromExtension(ext: string): string | null {
@@ -196,17 +405,45 @@ export class CodeIndexer {
   
   private detectFramework(_files: FileInfo[], packageJson: PackageJsonInfo | null): string | null {
     if (packageJson) {
-      if (packageJson.dependencies.includes('express') || packageJson.devDependencies.includes('express')) {
+      const allDeps = [...packageJson.dependencies, ...packageJson.devDependencies];
+      
+      // Node.js 框架
+      if (allDeps.includes('express') || allDeps.includes('express.js')) {
         return 'express';
       }
-      if (packageJson.dependencies.includes('react') || packageJson.devDependencies.includes('react')) {
+      if (allDeps.includes('react') || allDeps.includes('react-dom')) {
         return 'react';
       }
-      if (packageJson.dependencies.includes('vue') || packageJson.devDependencies.includes('vue')) {
+      if (allDeps.includes('vue') || allDeps.includes('@vue')) {
         return 'vue';
       }
-      if (packageJson.dependencies.includes('next') || packageJson.devDependencies.includes('next')) {
+      if (allDeps.includes('next') || allDeps.includes('next.js')) {
         return 'nextjs';
+      }
+      if (allDeps.includes('@angular')) {
+        return 'angular';
+      }
+      
+      // Python 框架
+      if (allDeps.some(d => d.includes('fastapi'))) {
+        return 'fastapi';
+      }
+      if (allDeps.some(d => d.includes('django'))) {
+        return 'django';
+      }
+      if (allDeps.some(d => d.includes('flask'))) {
+        return 'flask';
+      }
+      
+      // 其他 Python 库
+      if (allDeps.some(d => d.includes('typer'))) {
+        return 'typer';
+      }
+      if (allDeps.some(d => d.includes('rich'))) {
+        return 'rich';
+      }
+      if (allDeps.some(d => d.includes('pydantic'))) {
+        return 'pydantic';
       }
     }
     return null;

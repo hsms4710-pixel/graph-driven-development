@@ -52,6 +52,16 @@ interface DynamicQuestionTemplate {
   shouldAsk: (ctx: ProjectContext, analysis: RequirementAnalysis) => boolean;
 }
 
+// ==================== 安全访问辅助函数 ====================
+
+function safeLength<T>(arr: T[] | undefined): number {
+  return arr ? arr.length : 0;
+}
+
+function safeAccess<T>(arr: T[] | undefined, index: number): T | undefined {
+  return arr && arr.length > index ? arr[index] : undefined;
+}
+
 // ==================== 智能问题生成器 ====================
 
 export class SmartQuestionGenerator {
@@ -130,28 +140,30 @@ export class SmartQuestionGenerator {
           return '技术栈选择将决定项目的架构模式和开发流程';
         },
         optionGenerator: (ctx) => this.generateTechStackOptions(ctx),
-        priorityCalculator: (ctx) => ctx.frameworks.length > 0 ? 'medium' : 'high',
+        priorityCalculator: (ctx) => safeLength(ctx.frameworks) > 0 ? 'medium' : 'high',
         shouldAsk: (_ctx, _analysis) => true
       },
       {
         type: 'architecture',
         baseQuestion: '请选择应用架构模式',
         contextGenerator: (ctx, _analysis) => {
-          if (ctx.architecturePatterns.length > 0) {
-            const pattern = ctx.architecturePatterns[0];
-            return `检测到当前项目可能使用 ${pattern.name} 架构（置信度 ${Math.round(pattern.confidence * 100)}%），请确认或选择其他模式`;
+          if (safeLength(ctx.architecturePatterns) > 0) {
+            const pattern = safeAccess(ctx.architecturePatterns, 0);
+            if (pattern) {
+              return `检测到当前项目可能使用 ${pattern.name} 架构（置信度 ${Math.round(pattern.confidence * 100)}%），请确认或选择其他模式`;
+            }
           }
           return '架构模式决定了组件组织方式和数据流';
         },
         optionGenerator: (ctx) => this.generateArchitectureOptions(ctx),
-        priorityCalculator: (ctx) => ctx.architecturePatterns.length > 0 ? 'medium' : 'high',
+        priorityCalculator: (ctx) => safeLength(ctx.architecturePatterns) > 0 ? 'medium' : 'high',
         shouldAsk: (_ctx, analysis) => analysis.complexity !== 'simple'
       },
       {
         type: 'feature_scope',
         baseQuestion: '请确认功能范围',
         contextGenerator: (_ctx, analysis) => {
-          const featureCount = analysis.extractedFeatures.length;
+          const featureCount = safeLength(analysis.extractedFeatures);
           if (featureCount > 5) {
             return `检测到 ${featureCount} 个功能点，建议先实现 MVP 核心功能`;
           }
@@ -209,8 +221,8 @@ export class SmartQuestionGenerator {
         type: 'security',
         baseQuestion: '请选择安全策略级别',
         contextGenerator: (ctx, _analysis) => {
-          const securityReqs = ctx.inferredRequirements.filter(r => r.category === 'security');
-          if (securityReqs.length > 0) {
+          const securityReqs = ctx.inferredRequirements && ctx.inferredRequirements.filter(r => r.category === 'security');
+          if (securityReqs && securityReqs.length > 0) {
             return `根据项目分析，推断出 ${securityReqs.length} 个安全相关需求，请选择安全级别`;
           }
           return '安全策略决定了系统的防护等级';
@@ -230,14 +242,14 @@ export class SmartQuestionGenerator {
         type: 'performance',
         baseQuestion: '请选择性能优化策略',
         contextGenerator: (ctx, _analysis) => {
-          if (ctx.codeMetrics.complexity === 'high') {
+          if (ctx.codeMetrics && ctx.codeMetrics.complexity === 'high') {
             return '检测到代码复杂度较高，建议选择适当的优化策略';
           }
           return '性能策略决定了用户体验和系统容量';
         },
         optionGenerator: (ctx) => this.generatePerformanceOptions(ctx),
         priorityCalculator: (ctx, analysis) => 
-          analysis.complexity === 'complex' || ctx.codeMetrics.complexity === 'high' ? 'medium' : 'low',
+          analysis.complexity === 'complex' || (ctx.codeMetrics && ctx.codeMetrics.complexity === 'high') ? 'medium' : 'low',
         shouldAsk: (_ctx, analysis) => 
           analysis.complexity === 'complex' ||
           analysis.extractedFeatures.some(f => f.includes('高性能'))
@@ -249,14 +261,14 @@ export class SmartQuestionGenerator {
           if (ctx.testingFramework) {
             return `检测到已配置 ${ctx.testingFramework} 测试框架，请选择测试策略`;
           }
-          if (ctx.codeMetrics.testCoverage < 0.2 && ctx.codeMetrics.totalLines > 100) {
+          if (ctx.codeMetrics && ctx.codeMetrics.testCoverage < 0.2 && ctx.codeMetrics.totalLines > 100) {
             return `当前测试覆盖率为 ${Math.round(ctx.codeMetrics.testCoverage * 100)}%，建议加强测试`;
           }
           return '测试策略决定了代码质量和维护成本';
         },
         optionGenerator: (ctx) => this.generateTestingOptions(ctx),
         priorityCalculator: (ctx) => {
-          if (!ctx.testingFramework && ctx.codeMetrics.totalLines > 200) {
+          if (!ctx.testingFramework && ctx.codeMetrics && ctx.codeMetrics.totalLines > 200) {
             return 'medium';
           }
           return 'low';
