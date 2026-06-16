@@ -2,6 +2,10 @@
 
 > Coding Agent 的图驱动开发插件 + 独立 Web UI
 
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/hsms4710-pixel/graph-driven-development)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node.js-18%2B-brightgreen)](https://nodejs.org)
+
 Graph-Driven Development (GDD) 是一个创新的开发工具，让你：
 
 - **通过 Agent 对话开发**：与 Claude Code、Codex CLI、CodeBuddy 等 Agent 对话，AI 自动管理项目图谱
@@ -34,7 +38,7 @@ Graph-Driven Development (GDD) 是一个创新的开发工具，让你：
 - `gdd_export_graph` - 导出图谱（JSON/Markdown/Mermaid）
 - `gdd_list_graphs` - 列出所有图谱
 
-**6 个智能 Brainstorm MCP 工具（M3）**：
+**6 个智能 Brainstorm MCP 工具**：
 - `gdd_smart_start_session` - 启动智能 Brainstorm 会话（自动分析代码上下文）
 - `gdd_smart_get_next_question` - 获取下一个智能澄清问题
 - `gdd_smart_answer_question` - 回答智能问题并更新上下文
@@ -49,14 +53,14 @@ Graph-Driven Development (GDD) 是一个创新的开发工具，让你：
 - **Brainstorm 交互**：需求澄清问题生成和回答
 - **项目管理**：创建、编辑、删除、导出项目
 
-### 3. 智能 Brainstorm（M3）
+### 3. 智能 Brainstorm
 
 - **上下文感知**：从代码索引结果自动推断技术栈、架构模式
 - **动态问题生成**：根据上下文智能调整问题和选项
 - **智能选项过滤**：根据已有答案动态调整后续选项
 - **推断历史**：记录所有推断过程，便于审查
 
-### 4. 多 Agent 平台适配（M4）
+### 4. 多 Agent 平台适配
 
 - **统一适配器接口**：所有 Agent 平台使用相同的接口
 - **多平台支持**：Claude Code、Codex CLI、CodeBuddy、TRAE
@@ -163,6 +167,11 @@ Agent: 请问这个系统的主要用户群体是什么？
 | 实时通信 | WebSocket |
 | MCP 协议 | @modelcontextprotocol/sdk |
 
+## 文档
+
+- [MCP 工具参考手册](docs/MCP_TOOLS_REFERENCE.md)
+- [Agent 集成指南](docs/AGENT_INTEGRATION.md)
+
 ## 开发计划
 
 ### M1：MCP Server + 后端优化 ✅
@@ -178,21 +187,25 @@ Agent: 请问这个系统的主要用户群体是什么？
 - [x] WebSocket 实时推送图谱变更到 Web UI
 - [x] 前端代码索引对话框
 
-### M3：Brainstorm 智能化
-- [ ] 动态生成澄清问题
-- [ ] 问题优先级排序
-- [ ] 智能推荐
+### M3：Brainstorm 智能化 ✅
+- [x] 动态生成澄清问题
+- [x] 问题优先级排序
+- [x] 智能推荐
+- [x] 上下文感知
 
-### M4：多 Agent 平台适配
-- [ ] Claude Code 集成
-- [ ] Codex CLI 集成
-- [ ] CodeBuddy 内置
-- [ ] TRAE 集成
+### M4：多 Agent 平台适配 ✅
+- [x] Claude Code 集成
+- [x] Codex CLI 集成
+- [x] CodeBuddy 内置
+- [x] TRAE 集成
+- [x] 统一适配器接口
 
-### M5：1.0 正式版
-- [ ] 性能优化
-- [ ] 稳定性提升
-- [ ] 文档完善
+### M5：1.0 正式版 ✅
+- [x] 性能优化
+- [x] 稳定性提升
+- [x] 日志系统
+- [x] 错误处理
+- [x] 文档完善
 
 ## 代码索引
 

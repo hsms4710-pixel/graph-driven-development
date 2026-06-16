@@ -1,20 +1,72 @@
 {
   "name": "graph-driven-development",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "private": false,
   "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "gdd-mcp": "./dist/mcp/server.js",
+    "gdd-server": "./dist/server/http-server.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./mcp": {
+      "types": "./dist/mcp/index.d.ts",
+      "import": "./dist/mcp/index.js"
+    },
+    "./brainstorm": {
+      "types": "./dist/brainstorm/index.d.ts",
+      "import": "./dist/brainstorm/index.js"
+    },
+    "./agent-adapter": {
+      "types": "./dist/agent-adapter/index.d.ts",
+      "import": "./dist/agent-adapter/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:lib": "tsc",
+    "build:all": "npm run build:lib && npm run build",
     "preview": "vite preview",
     "server": "tsx server/http-server.ts",
     "mcp": "tsx src/mcp/server.ts",
     "start": "concurrently \"npm run server\" \"npm run dev\"",
-    "build:all": "npm run build && npm run server"
+    "test": "vitest",
+    "lint": "eslint src --ext .ts,.tsx",
+    "clean": "rm -rf dist node_modules/.cache",
+    "prepare": "npm run build:lib"
+  },
+  "keywords": [
+    "graph-driven",
+    "development",
+    "mcp",
+    "claude-code",
+    "codex",
+    "codebuddy",
+    "brainstorm",
+    "spec-development",
+    "agent-plugin"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hsms4710-pixel/graph-driven-development.git"
+  },
+  "homepage": "https://github.com/hsms4710-pixel/graph-driven-development#readme",
+  "bugs": {
+    "url": "https://github.com/hsms4710-pixel/graph-driven-development/issues"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.10.1",
     "cors": "^2.8.5",
     "express": "^4.18.2",
@@ -26,6 +78,8 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20.10.0",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@types/uuid": "^9.0.7",
@@ -34,6 +88,11 @@
     "concurrently": "^8.2.2",
     "tsx": "^4.22.4",
     "typescript": "^5.2.2",
-    "vite": "^5.0.8"
-  }
+    "vite": "^5.0.8",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
 }
