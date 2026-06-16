@@ -1,7 +1,7 @@
 /**
  * Graph-Driven Development - HTTP Server with WebSocket
  * 
- * 提供 REST API + WebSocket 实时同步
+ * 提供 REST API + WebSocket 实时同步 + 代码索引
  */
 
 import express from 'express';
@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
+import { CodeIndexer } from '../src/indexer/CodeIndexer';
 
 // ==================== 数据库初始化 ====================
 
@@ -427,6 +428,121 @@ app.get('/api/graphs/:graphId/export', (req, res) => {
       type: e.type,
       label: e.label
     }))
+  });
+});
+
+// ==================== 代码索引 API ====================
+
+// 从代码索引生成图谱
+app.post('/api/graphs/from-code', async (req, res) => {
+  const { projectPath, name } = req.body;
+  
+  if (!projectPath) {
+    return res.status(400).json({ error: 'projectPath is required' });
+  }
+  
+  // 验证路径存在
+  const resolvedPath = path.resolve(projectPath);
+  if (!fs.existsSync(resolvedPath)) {
+    return res.status(400).json({ error: 'Project path does not exist' });
+  }
+  
+  // 创建图谱
+  const graphId = `graph_${Date.now()}_${uuidv4().slice(0, 8)}`;
+  const graphName = name || path.basename(resolvedPath);
+  const now = Date.now();
+  
+  db.prepare(`
+    INSERT INTO graphs (id, name, description, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(graphId, graphName, `从 ${resolvedPath} 索引生成`, now, now);
+  
+  // 执行代码索引
+  try {
+    const indexer = new CodeIndexer(graphId, resolvedPath);
+    const result = await indexer.index();
+    
+    // 保存节点
+    for (const node of result.nodes) {
+      db.prepare(`
+        INSERT INTO nodes (id, graph_id, layer, label, properties, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        node.id,
+        graphId,
+        node.layer,
+        node.label,
+        JSON.stringify(node.properties),
+        node.properties.status || 'draft',
+        now,
+        now
+      );
+    }
+    
+    // 保存边
+    for (const edge of result.edges) {
+      db.prepare(`
+        INSERT INTO edges (id, graph_id, source, target, type, label, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        edge.id,
+        graphId,
+        edge.source,
+        edge.target,
+        edge.type,
+        edge.label || '',
+        now
+      );
+    }
+    
+    // 更新图谱时间戳
+    db.prepare('UPDATE graphs SET updated_at = ? WHERE id = ?').run(now, graphId);
+    
+    // 广播图谱创建事件
+    broadcastToGraph(graphId, {
+      type: 'graph:created',
+      graphId,
+      name: graphName,
+      nodeCount: result.nodes.length,
+      edgeCount: result.edges.length
+    });
+    
+    res.json({
+      id: graphId,
+      name: graphName,
+      indexedAt: now,
+      summary: result.summary
+    });
+  } catch (error: any) {
+    // 删除失败的图谱
+    db.prepare('DELETE FROM graphs WHERE id = ?').run(graphId);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 获取代码索引状态
+app.get('/api/graphs/:graphId/index-status', (req, res) => {
+  const graphId = req.params.graphId;
+  const graph = db.prepare('SELECT * FROM graphs WHERE id = ?').get(graphId);
+  
+  if (!graph) {
+    return res.status(404).json({ error: 'Graph not found' });
+  }
+  
+  const nodes = db.prepare('SELECT * FROM nodes WHERE graph_id = ?').all(graphId);
+  const edges = db.prepare('SELECT * FROM edges WHERE graph_id = ?').all(graphId);
+  
+  const layers: Record<string, number> = {};
+  for (const node of nodes) {
+    layers[node.layer] = (layers[node.layer] || 0) + 1;
+  }
+  
+  res.json({
+    graphId,
+    nodeCount: nodes.length,
+    edgeCount: edges.length,
+    layers,
+    lastUpdated: graph.updated_at
   });
 });
 

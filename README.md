@@ -142,15 +142,18 @@ Agent: 请问这个系统的主要用户群体是什么？
 
 ## 开发计划
 
-### M1（当前）：MCP Server + 后端优化 ✅
+### M1：MCP Server + 后端优化 ✅
 - [x] MCP Server 完整实现（12 个工具）
 - [x] SQLite 数据存储
 - [x] WebSocket 实时同步
 
-### M2：代码索引 + 实时同步
-- [ ] 从代码库生成图谱
-- [ ] 依赖关系分析
-- [ ] 图谱变更实时推送
+### M2：代码索引 + 实时同步 ✅
+- [x] 从代码库生成图谱（TypeScript, JavaScript, Python, Go, Rust）
+- [x] 自动识别项目语言和框架
+- [x] 模块/文件/函数层级提取
+- [x] import 依赖关系分析
+- [x] WebSocket 实时推送图谱变更到 Web UI
+- [x] 前端代码索引对话框
 
 ### M3：Brainstorm 智能化
 - [ ] 动态生成澄清问题
@@ -167,6 +170,37 @@ Agent: 请问这个系统的主要用户群体是什么？
 - [ ] 性能优化
 - [ ] 稳定性提升
 - [ ] 文档完善
+
+## 代码索引
+
+### 支持的语言
+- TypeScript / JavaScript
+- Python
+- Go
+- Rust
+
+### 索引层级
+```
+L1: Constitution (项目宪法)
+    ↓
+L2: TechStack (技术栈)
+    ↓
+L3: Epic (模块)
+    ↓
+L4: Story (文件)
+    ↓
+L5: Task (函数/类)
+```
+
+### 使用方式
+
+通过 Web UI 的「代码索引」按钮，或 API：
+
+```bash
+curl -X POST http://localhost:3001/api/graphs/from-code \
+  -H "Content-Type: application/json" \
+  -d '{"projectPath": "/path/to/your/project"}'
+```
 
 ## 部署
 
