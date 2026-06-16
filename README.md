@@ -56,7 +56,15 @@ Graph-Driven Development (GDD) 是一个创新的开发工具，让你：
 - **智能选项过滤**：根据已有答案动态调整后续选项
 - **推断历史**：记录所有推断过程，便于审查
 
-### 4. 实时同步
+### 4. 多 Agent 平台适配（M4）
+
+- **统一适配器接口**：所有 Agent 平台使用相同的接口
+- **多平台支持**：Claude Code、Codex CLI、CodeBuddy、TRAE
+- **灵活传输方式**：stdio（CLI）/ http（HTTP Server）/ inprocess（内置插件）
+- **会话管理**：支持多会话并发
+- **健康检查**：自动检测适配器状态
+
+### 5. 实时同步
 
 - **WebSocket 实时通信**：图谱变更实时推送到所有客户端
 - **Agent ↔ Web UI 同步**：Agent 操作的图谱变更自动显示在 Web UI
