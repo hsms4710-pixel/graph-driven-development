@@ -15,6 +15,7 @@ import Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
+import { smartBrainstormEngine, SmartClarificationSession } from '../brainstorm/SmartBrainstormEngine';
 
 // ==================== 数据库初始化 ====================
 
@@ -245,6 +246,90 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {}
+    }
+  },
+  // ==================== M3: 智能 Brainstorm 工具 ====================
+  {
+    name: 'gdd_smart_start_session',
+    description: '启动智能 Brainstorm 会话，自动分析代码上下文',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        user_input: { type: 'string', description: '用户需求描述' },
+        graph_id: { type: 'string', description: '图谱ID（可选）' },
+        code_paths: { 
+          type: 'array', 
+          items: { type: 'string' },
+          description: '代码路径列表（可选，用于上下文分析）'
+        },
+        auto_index: { type: 'boolean', description: '是否自动索引代码', default: false }
+      },
+      required: ['user_input']
+    }
+  },
+  {
+    name: 'gdd_smart_get_next_question',
+    description: '获取下一个智能澄清问题（基于上下文推断）',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        session_id: { type: 'string', description: '智能会话ID' }
+      },
+      required: ['session_id']
+    }
+  },
+  {
+    name: 'gdd_smart_answer_question',
+    description: '回答智能澄清问题并更新上下文',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        session_id: { type: 'string', description: '智能会话ID' },
+        question_id: { type: 'string', description: '问题ID' },
+        selected_options: { 
+          type: 'array', 
+          items: { type: 'string' },
+          description: '选中的选项ID列表'
+        }
+      },
+      required: ['session_id', 'question_id', 'selected_options']
+    }
+  },
+  {
+    name: 'gdd_smart_get_progress',
+    description: '获取智能 Brainstorm 会话进度',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        session_id: { type: 'string', description: '智能会话ID' }
+      },
+      required: ['session_id']
+    }
+  },
+  {
+    name: 'gdd_smart_update_context',
+    description: '更新智能会话的项目上下文',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        session_id: { type: 'string', description: '智能会话ID' },
+        context: { 
+          type: 'object',
+          description: '上下文更新（包含 languages, frameworks, architecturePatterns 等）'
+        }
+      },
+      required: ['session_id', 'context']
+    }
+  },
+  {
+    name: 'gdd_smart_get_inferences',
+    description: '获取智能会话的推断历史',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        session_id: { type: 'string', description: '智能会话ID' }
+      },
+      required: ['session_id']
     }
   }
 ];
@@ -868,6 +953,211 @@ function handleListGraphs() {
   };
 }
 
+// ==================== M3: 智能 Brainstorm 工具处理器 ====================
+
+// 存储智能会话（内存缓存）
+const smartSessions: Map<string, SmartClarificationSession> = new Map();
+
+function handleSmartStartSession(args: { 
+  user_input: string; 
+  graph_id?: string;
+  code_paths?: string[];
+  auto_index?: boolean 
+}) {
+  try {
+    const session = smartBrainstormEngine.startSmartSession(
+      args.user_input,
+      args.graph_id,
+      {
+        indexCode: args.auto_index === true && (args.code_paths?.length ?? 0) > 0,
+        codePaths: args.code_paths
+      }
+    );
+    
+    smartSessions.set(session.sessionId, session);
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            success: true,
+            session_id: session.sessionId,
+            graph_id: session.graphId,
+            state: session.state,
+            question_count: session.questions.length,
+            context: {
+              languages: session.projectContext?.languages,
+              frameworks: session.projectContext?.frameworks,
+              architecture_patterns: session.projectContext?.architecturePatterns?.map(p => p.name),
+              inferred_requirements: session.projectContext?.inferredRequirements?.slice(0, 5).map(r => r.name),
+              confidence: session.projectContext?.confidence
+            },
+            message: '智能 Brainstorm 会话已创建',
+            next_question: session.questions[0]
+          }, null, 2)
+        }
+      ]
+    };
+  } catch (error: any) {
+    return {
+      content: [{ type: 'text', text: JSON.stringify({ success: false, error: error.message || String(error) }) }],
+      isError: true
+    };
+  }
+}
+
+function handleSmartGetNextQuestion(args: { session_id: string }) {
+  const session = smartSessions.get(args.session_id);
+  if (!session) {
+    return {
+      content: [{ type: 'text', text: JSON.stringify({ success: false, error: '智能会话不存在' }) }],
+      isError: true
+    };
+  }
+  
+  const question = smartBrainstormEngine.getNextQuestion(args.session_id);
+  
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify({
+          success: true,
+          session_id: args.session_id,
+          state: session.state,
+          question,
+          progress: smartBrainstormEngine.getProgress(args.session_id),
+          total_questions: session.questions.length
+        }, null, 2)
+      }
+    ]
+  };
+}
+
+function handleSmartAnswerQuestion(args: { 
+  session_id: string; 
+  question_id: string; 
+  selected_options: string[] 
+}) {
+  const session = smartSessions.get(args.session_id);
+  if (!session) {
+    return {
+      content: [{ type: 'text', text: JSON.stringify({ success: false, error: '智能会话不存在' }) }],
+      isError: true
+    };
+  }
+  
+  const result = smartBrainstormEngine.answerQuestion(
+    args.session_id,
+    args.question_id,
+    args.selected_options
+  );
+  
+  if (!result.success) {
+    return {
+      content: [{ type: 'text', text: JSON.stringify({ success: false, error: result.error }) }],
+      isError: true
+    };
+  }
+  
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify({
+          success: true,
+          session_id: args.session_id,
+          question_id: args.question_id,
+          selected_options: args.selected_options,
+          next_action: result.nextAction,
+          inference: result.inference,
+          progress: smartBrainstormEngine.getProgress(args.session_id)
+        }, null, 2)
+      }
+    ]
+  };
+}
+
+function handleSmartGetProgress(args: { session_id: string }) {
+  const session = smartSessions.get(args.session_id);
+  if (!session) {
+    return {
+      content: [{ type: 'text', text: JSON.stringify({ success: false, error: '智能会话不存在' }) }],
+      isError: true
+    };
+  }
+  
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify({
+          success: true,
+          session_id: args.session_id,
+          state: session.state,
+          progress: smartBrainstormEngine.getProgress(args.session_id),
+          answered_questions: session.questions.filter((q: any) => q.status === 'answered'),
+          pending_questions: session.questions.filter((q: any) => q.status === 'pending')
+        }, null, 2)
+      }
+    ]
+  };
+}
+
+function handleSmartUpdateContext(args: { 
+  session_id: string; 
+  context: Record<string, unknown> 
+}) {
+  const session = smartSessions.get(args.session_id);
+  if (!session) {
+    return {
+      content: [{ type: 'text', text: JSON.stringify({ success: false, error: '智能会话不存在' }) }],
+      isError: true
+    };
+  }
+  
+  smartBrainstormEngine.updateContext(args.session_id, args.context as any);
+  
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify({
+          success: true,
+          session_id: args.session_id,
+          context_updated: args.context,
+          message: '上下文已更新'
+        }, null, 2)
+      }
+    ]
+  };
+}
+
+function handleSmartGetInferences(args: { session_id: string }) {
+  const session = smartSessions.get(args.session_id);
+  if (!session) {
+    return {
+      content: [{ type: 'text', text: JSON.stringify({ success: false, error: '智能会话不存在' }) }],
+      isError: true
+    };
+  }
+  
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify({
+          success: true,
+          session_id: args.session_id,
+          inferences: session.inferenceHistory,
+          total: session.inferenceHistory.length
+        }, null, 2)
+      }
+    ]
+  };
+}
+
 // ==================== 代码索引（简化版） ====================
 
 function indexCodebase(graphId: string, codePath: string) {
@@ -986,6 +1276,31 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return handleExportGraph(args as { graph_id: string; format?: string });
       case 'gdd_list_graphs':
         return handleListGraphs();
+      // M3: 智能 Brainstorm 工具
+      case 'gdd_smart_start_session':
+        return handleSmartStartSession(args as { 
+          user_input: string; 
+          graph_id?: string;
+          code_paths?: string[];
+          auto_index?: boolean 
+        });
+      case 'gdd_smart_get_next_question':
+        return handleSmartGetNextQuestion(args as { session_id: string });
+      case 'gdd_smart_answer_question':
+        return handleSmartAnswerQuestion(args as { 
+          session_id: string; 
+          question_id: string; 
+          selected_options: string[] 
+        });
+      case 'gdd_smart_get_progress':
+        return handleSmartGetProgress(args as { session_id: string });
+      case 'gdd_smart_update_context':
+        return handleSmartUpdateContext(args as { 
+          session_id: string; 
+          context: Record<string, unknown> 
+        });
+      case 'gdd_smart_get_inferences':
+        return handleSmartGetInferences(args as { session_id: string });
       default:
         return {
           content: [{ type: 'text', text: JSON.stringify({ success: false, error: `未知工具: ${name}` }) }],

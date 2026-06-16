@@ -20,7 +20,7 @@ Graph-Driven Development (GDD) 是一个创新的开发工具，让你：
          图谱可视化 + 需求澄清 + 依赖管理
 ```
 
-**12 个 MCP 工具**：
+**12 个基础 MCP 工具**：
 - `gdd_create_graph` - 创建图谱项目
 - `gdd_load_graph` - 加载图谱或从代码索引生成
 - `gdd_add_node` - 添加节点
@@ -34,6 +34,14 @@ Graph-Driven Development (GDD) 是一个创新的开发工具，让你：
 - `gdd_export_graph` - 导出图谱（JSON/Markdown/Mermaid）
 - `gdd_list_graphs` - 列出所有图谱
 
+**6 个智能 Brainstorm MCP 工具（M3）**：
+- `gdd_smart_start_session` - 启动智能 Brainstorm 会话（自动分析代码上下文）
+- `gdd_smart_get_next_question` - 获取下一个智能澄清问题
+- `gdd_smart_answer_question` - 回答智能问题并更新上下文
+- `gdd_smart_get_progress` - 获取智能会话进度
+- `gdd_smart_update_context` - 更新项目上下文
+- `gdd_smart_get_inferences` - 获取推断历史
+
 ### 2. 独立 Web UI
 
 - **5 层架构可视化**：L1 宪法 → L2 技术栈 → L3 Epic → L4 Story → L5 Task
@@ -41,7 +49,14 @@ Graph-Driven Development (GDD) 是一个创新的开发工具，让你：
 - **Brainstorm 交互**：需求澄清问题生成和回答
 - **项目管理**：创建、编辑、删除、导出项目
 
-### 3. 实时同步
+### 3. 智能 Brainstorm（M3）
+
+- **上下文感知**：从代码索引结果自动推断技术栈、架构模式
+- **动态问题生成**：根据上下文智能调整问题和选项
+- **智能选项过滤**：根据已有答案动态调整后续选项
+- **推断历史**：记录所有推断过程，便于审查
+
+### 4. 实时同步
 
 - **WebSocket 实时通信**：图谱变更实时推送到所有客户端
 - **Agent ↔ Web UI 同步**：Agent 操作的图谱变更自动显示在 Web UI
