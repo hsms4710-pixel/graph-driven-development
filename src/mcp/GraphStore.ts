@@ -2,12 +2,37 @@
  * Graph Store - 图数据存储
  * 
  * 管理所有图的存储和检索
+ * 支持浏览器 localStorage 和 Node.js 环境
  */
 
 import { GraphData, NodeData, EdgeData, ClarificationSession, ClarificationQuestion } from './types';
 
 const STORAGE_KEY = 'gdd_graphs';
 const SESSION_KEY = 'gdd_sessions';
+
+// 检测是否在浏览器环境
+const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+
+// Node.js 环境下的简单存储
+const nodeStorage: Record<string, string> = {};
+
+/**
+ * 跨环境的 localStorage 兼容层
+ */
+function getItem(key: string): string | null {
+  if (isBrowser) {
+    return localStorage.getItem(key);
+  }
+  return nodeStorage[key] || null;
+}
+
+function setItem(key: string, value: string): void {
+  if (isBrowser) {
+    localStorage.setItem(key, value);
+  } else {
+    nodeStorage[key] = value;
+  }
+}
 
 export class GraphStore {
   private graphs: Map<string, GraphData> = new Map();
@@ -336,17 +361,17 @@ export class GraphStore {
       const graphsData = Array.from(this.graphs.values());
       const sessionsData = Array.from(this.sessions.values());
       
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(graphsData));
-      localStorage.setItem(SESSION_KEY, JSON.stringify(sessionsData));
+      setItem(STORAGE_KEY, JSON.stringify(graphsData));
+      setItem(SESSION_KEY, JSON.stringify(sessionsData));
     } catch (e) {
-      console.error('Failed to save to localStorage:', e);
+      console.error('Failed to save to storage:', e);
     }
   }
   
   private loadFromStorage(): void {
     try {
-      const graphsJson = localStorage.getItem(STORAGE_KEY);
-      const sessionsJson = localStorage.getItem(SESSION_KEY);
+      const graphsJson = getItem(STORAGE_KEY);
+      const sessionsJson = getItem(SESSION_KEY);
       
       if (graphsJson) {
         const graphsData = JSON.parse(graphsJson) as Array<GraphData>;
@@ -358,7 +383,7 @@ export class GraphStore {
         sessionsData.forEach((session: ClarificationSession) => this.sessions.set(session.sessionId, session));
       }
     } catch (e) {
-      console.error('Failed to load from localStorage:', e);
+      console.error('Failed to load from storage:', e);
     }
   }
 }
