@@ -297,11 +297,88 @@ const App: React.FC = () => {
   const fetchGraphs = async () => {
     try {
       const response = await fetch('http://localhost:3001/api/graphs');
-      const data = await response.json();
-      setGraphs(data);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.graphs && data.graphs.length > 0) {
+          setGraphs(data.graphs);
+          // 自动选择第一个图谱
+          handleSelectGraph(data.graphs[0].id);
+        } else {
+          console.log('No graphs found, showing empty state');
+        }
+      } else {
+        console.log('Backend returned error:', response.status);
+      }
     } catch (error) {
-      console.error('Failed to fetch graphs:', error);
+      console.log('Backend not available:', error);
+      // 后端不可用，显示空状态让用户创建新图谱
     }
+  };
+
+  // 加载示例图谱
+  const loadDemoGraph = () => {
+    const demoNodes: any[] = [
+      { id: 'l1_constitution', type: 'custom', position: { x: 500, y: 50 }, data: { label: 'Todo App 宪法', layer: 'L1_Constitution', status: 'approved', properties: { principles: '简洁、响应式、可测试' } } },
+      { id: 'l2_react', type: 'custom', position: { x: 200, y: 180 }, data: { label: 'React 18', layer: 'L2_TechStack', status: 'approved', properties: {} } },
+      { id: 'l2_ts', type: 'custom', position: { x: 400, y: 180 }, data: { label: 'TypeScript', layer: 'L2_TechStack', status: 'approved', properties: {} } },
+      { id: 'l2_css', type: 'custom', position: { x: 600, y: 180 }, data: { label: 'CSS Modules', layer: 'L2_TechStack', status: 'approved', properties: {} } },
+      { id: 'l2_vite', type: 'custom', position: { x: 800, y: 180 }, data: { label: 'Vite', layer: 'L2_TechStack', status: 'approved', properties: {} } },
+      { id: 'l3_ui', type: 'custom', position: { x: 200, y: 350 }, data: { label: '用户界面', layer: 'L3_Epic', status: 'approved', properties: { priority: 'High' } } },
+      { id: 'l3_data', type: 'custom', position: { x: 500, y: 350 }, data: { label: '数据管理', layer: 'L3_Epic', status: 'approved', properties: { priority: 'High' } } },
+      { id: 'l3_features', type: 'custom', position: { x: 800, y: 350 }, data: { label: '核心功能', layer: 'L3_Epic', status: 'approved', properties: { priority: 'High' } } },
+      { id: 'l4_ui_layout', type: 'custom', position: { x: 100, y: 520 }, data: { label: '布局设计', layer: 'L4_Story', status: 'reviewing', properties: { hours: 2 } } },
+      { id: 'l4_ui_input', type: 'custom', position: { x: 220, y: 520 }, data: { label: '输入框组件', layer: 'L4_Story', status: 'reviewing', properties: { hours: 1 } } },
+      { id: 'l4_ui_list', type: 'custom', position: { x: 340, y: 520 }, data: { label: '列表展示', layer: 'L4_Story', status: 'reviewing', properties: { hours: 2 } } },
+      { id: 'l4_data_state', type: 'custom', position: { x: 500, y: 520 }, data: { label: '状态管理', layer: 'L4_Story', status: 'reviewing', properties: { hours: 2 } } },
+      { id: 'l4_data_storage', type: 'custom', position: { x: 660, y: 520 }, data: { label: '本地存储', layer: 'L4_Story', status: 'reviewing', properties: { hours: 2 } } },
+      { id: 'l4_feat_add', type: 'custom', position: { x: 820, y: 520 }, data: { label: '添加任务', layer: 'L4_Story', status: 'reviewing', properties: { hours: 2 } } },
+      { id: 'l4_feat_delete', type: 'custom', position: { x: 940, y: 520 }, data: { label: '删除任务', layer: 'L4_Story', status: 'reviewing', properties: { hours: 1 } } },
+      { id: 'l4_feat_toggle', type: 'custom', position: { x: 1060, y: 520 }, data: { label: '完成任务', layer: 'L4_Story', status: 'reviewing', properties: { hours: 1 } } },
+      { id: 'l5_form', type: 'custom', position: { x: 100, y: 700 }, data: { label: 'FORM', layer: 'L5_Task', status: 'implemented', properties: {} } },
+      { id: 'l5_validation', type: 'custom', position: { x: 200, y: 700 }, data: { label: 'VALIDATION', layer: 'L5_Task', status: 'implemented', properties: {} } },
+      { id: 'l5_api', type: 'custom', position: { x: 300, y: 700 }, data: { label: 'API', layer: 'L5_Task', status: 'implemented', properties: {} } },
+      { id: 'l5_structure', type: 'custom', position: { x: 450, y: 700 }, data: { label: 'STRUCTURE', layer: 'L5_Task', status: 'in_progress', properties: {} } },
+      { id: 'l5_styling', type: 'custom', position: { x: 550, y: 700 }, data: { label: 'STYLING', layer: 'L5_Task', status: 'draft', properties: {} } },
+      { id: 'l5_data', type: 'custom', position: { x: 700, y: 700 }, data: { label: 'DATA', layer: 'L5_Task', status: 'draft', properties: {} } },
+      { id: 'l5_render', type: 'custom', position: { x: 800, y: 700 }, data: { label: 'RENDER', layer: 'L5_Task', status: 'draft', properties: {} } },
+      { id: 'l5_add', type: 'custom', position: { x: 950, y: 700 }, data: { label: 'ADD', layer: 'L5_Task', status: 'draft', properties: {} } },
+      { id: 'l5_delete', type: 'custom', position: { x: 1050, y: 700 }, data: { label: 'DELETE', layer: 'L5_Task', status: 'draft', properties: {} } },
+      { id: 'l5_toggle', type: 'custom', position: { x: 1150, y: 700 }, data: { label: 'TOGGLE', layer: 'L5_Task', status: 'draft', properties: {} } },
+      { id: 'l5_app', type: 'custom', position: { x: 1250, y: 700 }, data: { label: 'APP', layer: 'L5_Task', status: 'draft', properties: {} } },
+    ];
+
+    const demoEdges: any[] = [
+      { id: 'e1', source: 'l1_constitution', target: 'l2_react', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#8E44AD' } },
+      { id: 'e2', source: 'l1_constitution', target: 'l2_ts', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#8E44AD' } },
+      { id: 'e3', source: 'l1_constitution', target: 'l2_css', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#8E44AD' } },
+      { id: 'e4', source: 'l1_constitution', target: 'l2_vite', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#8E44AD' } },
+      { id: 'e5', source: 'l2_react', target: 'l3_ui', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#8E44AD' } },
+      { id: 'e6', source: 'l2_react', target: 'l3_data', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#8E44AD' } },
+      { id: 'e7', source: 'l2_react', target: 'l3_features', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#8E44AD' } },
+      { id: 'e8', source: 'l3_ui', target: 'l4_ui_layout', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#27AE60' } },
+      { id: 'e9', source: 'l3_ui', target: 'l4_ui_input', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#27AE60' } },
+      { id: 'e10', source: 'l3_ui', target: 'l4_ui_list', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#27AE60' } },
+      { id: 'e11', source: 'l3_data', target: 'l4_data_state', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#27AE60' } },
+      { id: 'e12', source: 'l3_data', target: 'l4_data_storage', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#27AE60' } },
+      { id: 'e13', source: 'l3_features', target: 'l4_feat_add', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#27AE60' } },
+      { id: 'e14', source: 'l3_features', target: 'l4_feat_delete', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#27AE60' } },
+      { id: 'e15', source: 'l3_features', target: 'l4_feat_toggle', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#27AE60' } },
+      { id: 'e16', source: 'l4_ui_layout', target: 'l5_form', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#E67E22' } },
+      { id: 'e17', source: 'l4_ui_layout', target: 'l5_structure', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#E67E22' } },
+      { id: 'e18', source: 'l4_ui_input', target: 'l5_validation', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#E67E22' } },
+      { id: 'e19', source: 'l4_ui_input', target: 'l5_api', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#E67E22' } },
+      { id: 'e20', source: 'l4_ui_list', target: 'l5_render', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#E67E22' } },
+      { id: 'e21', source: 'l4_data_state', target: 'l5_data', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#E67E22' } },
+      { id: 'e22', source: 'l4_data_storage', target: 'l5_styling', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#E67E22' } },
+      { id: 'e23', source: 'l4_feat_add', target: 'l5_add', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#E67E22' } },
+      { id: 'e24', source: 'l4_feat_delete', target: 'l5_delete', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#E67E22' } },
+      { id: 'e25', source: 'l4_feat_toggle', target: 'l5_toggle', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#E67E22' } },
+      { id: 'e26', source: 'l4_feat_toggle', target: 'l5_app', type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#E67E22' } },
+    ];
+
+    setNodes(demoNodes);
+    setEdges(demoEdges);
+    setCurrentGraphId('demo-todo-app');
   };
 
   // 选择图谱

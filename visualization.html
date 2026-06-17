@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>GDD 图谱可视化</title>
+    <script src="https://unpkg.com/vis-network@9.1.3/dist/vis-network.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a2e;
+            font-family: sans-serif;
+        }
+        #network {
+            width: 100vw;
+            height: 100vh;
+        }
+        .info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            z-index: 10;
+        }
+        .info h2 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+        .info div {
+            margin: 5px 0;
+        }
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            z-index: 10;
+            max-width: 300px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+        }
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div id="network"></div>
+    
+    <div class="info">
+        <h2>GDD 图谱可视化</h2>
+        <div>节点: <strong id="nodeCount">26</strong></div>
+        <div>边: <strong id="edgeCount">25</strong></div>
+        <div>层级: <strong>5</strong></div>
+        <div style="margin-top: 10px; font-size: 12px; color: #aaa;">
+            提示: 拖拽节点、滚轮缩放、点击节点查看详情
+        </div>
+    </div>
+    
+    <div class="legend">
+        <strong>图层说明</strong>
+        <div class="legend-item"><span class="dot" style="background: #8B0000;"></span>L1 宪法层</div>
+        <div class="legend-item"><span class="dot" style="background: #FF6B6B;"></span>L2 技术栈</div>
+        <div class="legend-item"><span class="dot" style="background: #FFA500;"></span>L3 史诗层</div>
+        <div class="legend-item"><span class="dot" style="background: #32CD32;"></span>L4 故事层</div>
+        <div class="legend-item"><span class="dot" style="background: #1E90FF;"></span>L5 任务层</div>
+    </div>
+
+    <script>
+        // 等待 vis.js 加载
+        window.addEventListener('load', function() {
+            if (typeof vis === 'undefined') {
+                document.body.innerHTML += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;padding:20px;border-radius:8px;color:white;font-size:16px;">vis.js 加载失败，请刷新页面重试</div>';
+                return;
+            }
+            
+            // 图谱数据
+            const nodesData = [
+                { id: "l1_constitution", label: "项目宪法", group: "L1", title: "项目宪法<br/>原则: 简洁、可维护、可测试" },
+                { id: "l2_typescript", label: "TypeScript", group: "L2", title: "TypeScript" },
+                { id: "l2_react", label: "React", group: "L2", title: "React" },
+                { id: "l2_nodejs", label: "Node.js", group: "L2", title: "Node.js" },
+                { id: "l2_sqlite", label: "SQLite", group: "L2", title: "SQLite" },
+                { id: "l3_auth", label: "用户认证", group: "L3", title: "用户认证系统<br/>优先级: High" },
+                { id: "l3_dashboard", label: "数据看板", group: "L3", title: "数据看板<br/>优先级: Medium" },
+                { id: "l3_reports", label: "报表系统", group: "L3", title: "报表系统<br/>优先级: Low" },
+                { id: "l4_auth_register", label: "注册", group: "L4", title: "注册功能<br/>预估: 4h" },
+                { id: "l4_auth_login", label: "登录", group: "L4", title: "登录功能<br/>预估: 2h" },
+                { id: "l4_auth_reset", label: "重置密码", group: "L4", title: "重置密码<br/>预估: 3h" },
+                { id: "l4_dashboard_layout", label: "布局", group: "L4", title: "布局功能<br/>预估: 8h" },
+                { id: "l4_dashboard_charts", label: "图表", group: "L4", title: "图表功能<br/>预估: 6h" },
+                { id: "l4_dashboard_filters", label: "筛选器", group: "L4", title: "筛选器<br/>预估: 4h" },
+                { id: "l4_reports_generator", label: "生成器", group: "L4", title: "报告生成器<br/>预估: 10h" },
+                { id: "l4_reports_export", label: "导出", group: "L4", title: "导出功能<br/>预估: 2h" },
+                { id: "l4_reports_schedule", label: "定时", group: "L4", title: "定时任务<br/>预估: 4h" },
+                { id: "l5_auth_register_form", label: "表单", group: "L5", title: "注册表单 - 已完成" },
+                { id: "l5_auth_register_validation", label: "验证", group: "L5", title: "注册验证 - 进行中" },
+                { id: "l5_auth_register_api", label: "API", group: "L5", title: "注册API - 待办" },
+                { id: "l5_auth_login_form", label: "表单", group: "L5", title: "登录表单 - 已完成" },
+                { id: "l5_auth_login_api", label: "API", group: "L5", title: "登录API - 进行中" },
+                { id: "l5_dashboard_layout_structure", label: "结构", group: "L5", title: "布局结构 - 待办" },
+                { id: "l5_dashboard_layout_styling", label: "样式", group: "L5", title: "布局样式 - 已完成" },
+                { id: "l5_dashboard_charts_data", label: "数据", group: "L5", title: "图表数据 - 进行中" },
+                { id: "l5_dashboard_charts_render", label: "渲染", group: "L5", title: "图表渲染 - 待办" }
+            ];
+
+            const edgesData = [
+                { from: "l1_constitution", to: "l2_typescript" },
+                { from: "l1_constitution", to: "l2_react" },
+                { from: "l1_constitution", to: "l2_nodejs" },
+                { from: "l1_constitution", to: "l2_sqlite" },
+                { from: "l2_typescript", to: "l3_auth" },
+                { from: "l2_typescript", to: "l3_dashboard" },
+                { from: "l2_typescript", to: "l3_reports" },
+                { from: "l3_auth", to: "l4_auth_register" },
+                { from: "l3_auth", to: "l4_auth_login" },
+                { from: "l3_auth", to: "l4_auth_reset" },
+                { from: "l3_dashboard", to: "l4_dashboard_layout" },
+                { from: "l3_dashboard", to: "l4_dashboard_charts" },
+                { from: "l3_dashboard", to: "l4_dashboard_filters" },
+                { from: "l3_reports", to: "l4_reports_generator" },
+                { from: "l3_reports", to: "l4_reports_export" },
+                { from: "l3_reports", to: "l4_reports_schedule" },
+                { from: "l4_auth_register", to: "l5_auth_register_form" },
+                { from: "l4_auth_register", to: "l5_auth_register_validation" },
+                { from: "l4_auth_register", to: "l5_auth_register_api" },
+                { from: "l4_auth_login", to: "l5_auth_login_form" },
+                { from: "l4_auth_login", to: "l5_auth_login_api" },
+                { from: "l4_dashboard_layout", to: "l5_dashboard_layout_structure" },
+                { from: "l4_dashboard_layout", to: "l5_dashboard_layout_styling" },
+                { from: "l4_dashboard_charts", to: "l5_dashboard_charts_data" },
+                { from: "l4_dashboard_charts", to: "l5_dashboard_charts_render" }
+            ];
+
+            const nodes = new vis.DataSet(nodesData);
+            const edges = new vis.DataSet(edgesData);
+
+            // 颜色映射
+            const colorMap = {
+                "L1": { background: "#8B0000", border: "#5C0000" },
+                "L2": { background: "#FF6B6B", border: "#CC0000" },
+                "L3": { background: "#FFA500", border: "#FF8C00" },
+                "L4": { background: "#32CD32", border: "#00AA00" },
+                "L5": { background: "#1E90FF", border: "#0052CC" }
+            };
+
+            const sizeMap = {
+                "L1": 60,
+                "L2": 40,
+                "L3": 35,
+                "L4": 28,
+                "L5": 22
+            };
+
+            // 应用样式
+            nodes.forEach(n => {
+                const group = n.group;
+                nodes.update({
+                    id: n.id,
+                    label: n.label,
+                    title: n.title,
+                    color: colorMap[group],
+                    size: sizeMap[group]
+                });
+            });
+
+            const container = document.getElementById('network');
+            const data = { nodes, edges };
+
+            const options = {
+                physics: {
+                    enabled: true,
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -150,
+                        centralGravity: 0.01,
+                        springLength: 120,
+                        springConstant: 0.02,
+                        damping: 0.4
+                    },
+                    stabilization: {
+                        iterations: 200
+                    }
+                },
+                interaction: {
+                    hover: true,
+                    tooltipDelay: 100,
+                    navigationButtons: true
+                },
+                nodes: {
+                    font: {
+                        size: 12,
+                        color: '#ffffff',
+                        face: 'sans-serif'
+                    },
+                    shadow: {
+                        enabled: true,
+                        color: 'rgba(0,0,0,0.3)',
+                        size: 10
+                    }
+                },
+                edges: {
+                    color: {
+                        color: '#667eea',
+                        highlight: '#764ba2',
+                        hover: '#667eea'
+                    },
+                    arrows: 'to',
+                    smooth: {
+                        type: 'curvedCW',
+                        forceDirection: 'vertical'
+                    },
+                    shadow: {
+                        enabled: true,
+                        color: 'rgba(0,0,0,0.2)',
+                        size: 5
+                    }
+                }
+            };
+
+            const network = new vis.Network(container, data, options);
+            
+            // 适应视图
+            setTimeout(() => network.fit(), 300);
+            
+            document.getElementById('nodeCount').textContent = nodes.length;
+            document.getElementById('edgeCount').textContent = edges.length;
+        });
+    </script>
+</body>
+</html>

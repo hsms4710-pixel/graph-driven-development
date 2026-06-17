@@ -1,0 +1,225 @@
+{
+  "project": "vite",
+  "testDate": "2026-06-17T09:14:07.589Z",
+  "summary": {
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0,
+    "total": 21,
+    "totalDuration": 57
+  },
+  "categories": {
+    "代码索引": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    "图谱存储": {
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    },
+    "上下文工具": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    "GDD 命令": {
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    "节点模板": {
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    "项目分析": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "details": [
+    {
+      "name": "分析项目结构",
+      "category": "代码索引",
+      "status": "passed",
+      "duration": 37,
+      "details": {
+        "fileCount": 381,
+        "language": "typescript",
+        "framework": null
+      }
+    },
+    {
+      "name": "索引统计",
+      "category": "代码索引",
+      "status": "passed",
+      "duration": 0,
+      "details": {
+        "totalFiles": 381,
+        "tsFiles": 227
+      }
+    },
+    {
+      "name": "创建项目图谱",
+      "category": "图谱存储",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "name": "添加 Constitution 节点",
+      "category": "图谱存储",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "name": "添加 TechStack 节点",
+      "category": "图谱存储",
+      "status": "passed",
+      "duration": 0,
+      "details": {
+        "count": 4
+      }
+    },
+    {
+      "name": "添加 Epic 节点",
+      "category": "图谱存储",
+      "status": "passed",
+      "duration": 0,
+      "details": {
+        "count": 4
+      }
+    },
+    {
+      "name": "添加 Story 节点",
+      "category": "图谱存储",
+      "status": "passed",
+      "duration": 0,
+      "details": {
+        "count": 6
+      }
+    },
+    {
+      "name": "添加 Task 节点",
+      "category": "图谱存储",
+      "status": "passed",
+      "duration": 0,
+      "details": {
+        "count": 6
+      }
+    },
+    {
+      "name": "添加节点关系",
+      "category": "图谱存储",
+      "status": "passed",
+      "duration": 0,
+      "details": {
+        "edgeCount": 20
+      }
+    },
+    {
+      "name": "图谱统计",
+      "category": "图谱存储",
+      "status": "passed",
+      "duration": 0,
+      "details": {
+        "nodes": 21,
+        "edges": 0
+      }
+    },
+    {
+      "name": "按层级查询",
+      "category": "上下文工具",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "name": "获取上下文",
+      "category": "上下文工具",
+      "status": "passed",
+      "duration": 0,
+      "details": {
+        "hasContext": true,
+        "relatedCount": 0
+      }
+    },
+    {
+      "name": "影响分析",
+      "category": "上下文工具",
+      "status": "passed",
+      "duration": 0,
+      "details": {
+        "affectedCount": 0
+      }
+    },
+    {
+      "name": "查找相关项",
+      "category": "上下文工具",
+      "status": "passed",
+      "duration": 1,
+      "details": {
+        "relatedCount": 0
+      }
+    },
+    {
+      "name": "help 命令",
+      "category": "GDD 命令",
+      "status": "passed",
+      "duration": 0,
+      "details": {
+        "commandCount": 0
+      }
+    },
+    {
+      "name": "status 命令",
+      "category": "GDD 命令",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "name": "未知命令处理",
+      "category": "GDD 命令",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "name": "获取所有模板",
+      "category": "节点模板",
+      "status": "passed",
+      "duration": 0,
+      "details": {
+        "count": 14
+      }
+    },
+    {
+      "name": "验证有效节点",
+      "category": "节点模板",
+      "status": "passed",
+      "duration": 0,
+      "details": {
+        "valid": true
+      }
+    },
+    {
+      "name": "验证无效节点",
+      "category": "节点模板",
+      "status": "passed",
+      "duration": 0,
+      "details": {
+        "valid": true
+      }
+    },
+    {
+      "name": "项目结构分析",
+      "category": "项目分析",
+      "status": "passed",
+      "duration": 19,
+      "details": {
+        "srcExists": true,
+        "tsFileCount": 232
+      }
+    }
+  ]
+}

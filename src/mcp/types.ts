@@ -1,44 +1,353 @@
 /**
- * MCP Server 类型定义
+ * MCP Server 类型定义 V2.0
  * 
- * 定义 Agent 与 Graph 交互的标准接口
+ * 重新设计的图谱架构：
+ * - Context (背景设定) - 不是节点，是全局上下文
+ * - L1 Module (大模块) - 包含技术栈信息
+ * - L2 SubModule (子模块) - 细分功能
+ * - L3 Feature (功能需求) - 跨模块的用户故事
+ * - L4 Task (任务) - Agent 动态生成，挂载在模块上
  */
 
-// ==================== 基础类型 ====================
+// ==================== 核心概念 ====================
+
+/**
+ * 项目上下文 - 不是节点，是全局背景设定
+ * 包含项目的目标、约束、原则、业务领域等
+ */
+export interface ProjectContext {
+  id: string;
+  name: string;
+  description?: string;
+  
+  // 项目目标和原则
+  goals: string[];
+  principles: string[];
+  constraints: string[];
+  
+  // 业务领域
+  domain: {
+    industry?: string;
+    targetUsers?: string[];
+    useCases?: string[];
+  };
+  
+  // 全局配置
+  globalConfig?: {
+    defaultLanguage?: string;
+    defaultFramework?: string;
+    codingStandards?: string[];
+  };
+  
+  createdAt: number;
+  updatedAt: number;
+}
+
+// ==================== 节点层级类型 ====================
 
 export type LayerType = 
-  | 'L1_Constitution'    // 项目宪法/原则
-  | 'L2_TechStack'       // 技术栈
-  | 'L3_Epic'            // 史诗/大型功能
-  | 'L4_Story'           // 故事/模块
-  | 'L5_Task';           // 任务/文件
+  | 'L1_Module'       // 大模块
+  | 'L2_SubModule'    // 子模块
+  | 'L3_Feature'      // 功能需求
+  | 'L4_Task';        // 任务
 
-export interface NodeData {
+// ==================== 技术栈信息 ====================
+
+/**
+ * 技术栈配置 - 作为模块的属性，而非独立层级
+ */
+export interface TechStack {
+  // 语言
+  languages: {
+    primary: string;
+    secondary?: string[];
+  };
+  
+  // 框架
+  frameworks: {
+    name: string;
+    version?: string;
+    purpose?: string;
+  }[];
+  
+  // 库
+  libraries: {
+    name: string;
+    version?: string;
+    purpose?: string;
+  }[];
+  
+  // 构建工具
+  buildTools?: {
+    name: string;
+    config?: string;
+  }[];
+  
+  // 运行时
+  runtime?: {
+    name: string;
+    version?: string;
+  };
+}
+
+// ==================== 模块节点 ====================
+
+/**
+ * 模块节点 - L1 和 L2 层级共用
+ */
+export interface ModuleNode {
   id: string;
   label: string;
-  layer: LayerType;
-  type: string;
-  properties: Record<string, unknown>;
-  position?: { x: number; y: number };
-  status?: 'pending' | 'clarifying' | 'ready' | 'generating' | 'done' | 'error';
+  layer: 'L1_Module' | 'L2_SubModule';
+  
+  // 模块描述
+  description?: string;
+  responsibilities: string[];  // 职责列表
+  
+  // 技术栈 - 模块的核心属性
+  techStack?: TechStack;
+  
+  // 代码映射
+  codeMapping?: {
+    directory?: string;
+    entryFile?: string;
+    files?: string[];
+  };
+  
+  // 状态
+  status: ModuleStatus;
+  
+  // 元数据
+  metadata?: Record<string, unknown>;
+  
+  createdAt: number;
+  updatedAt: number;
 }
+
+export type ModuleStatus = 
+  | 'planning'     // 规划中
+  | 'clarifying'   // 澄清中
+  | 'ready'        // 就绪
+  | 'in_progress'  // 开发中
+  | 'done'         // 完成
+  | 'blocked';     // 阻塞
+
+// ==================== 功能需求节点 ====================
+
+/**
+ * 功能需求 - L3 层级
+ * 跨模块的用户故事，关联到多个模块
+ */
+export interface FeatureNode {
+  id: string;
+  label: string;
+  layer: 'L3_Feature';
+  
+  // 用户故事
+  userStory: {
+    asA: string;      // 作为...
+    iWant: string;    // 我想要...
+    soThat: string;   // 以便...
+  };
+  
+  // 描述
+  description?: string;
+  acceptanceCriteria: string[];  // 验收标准
+  
+  // 关联模块 - 多对多关系
+  relatedModules: string[];  // 模块 ID 列表
+  
+  // 优先级
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  
+  // 状态
+  status: FeatureStatus;
+  
+  // 预估
+  estimate?: {
+    points?: number;
+    hours?: number;
+  };
+  
+  metadata?: Record<string, unknown>;
+  
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type FeatureStatus = 
+  | 'backlog'       // 待规划
+  | 'analyzing'     // 分析中
+  | 'ready'         // 就绪
+  | 'in_progress'   // 开发中
+  | 'testing'       // 测试中
+  | 'done'          // 完成
+  | 'cancelled';    // 取消
+
+// ==================== 任务节点 ====================
+
+/**
+ * 任务节点 - L4 层级
+ * Agent 动态生成，挂载在模块上
+ */
+export interface TaskNode {
+  id: string;
+  label: string;
+  layer: 'L4_Task';
+  
+  // 任务描述
+  description?: string;
+  
+  // 所属模块 - 挂载关系
+  moduleId: string;  // 挂载的模块 ID
+  
+  // 关联功能（可选）
+  featureId?: string;
+  
+  // 任务类型
+  type: TaskType;
+  
+  // 优先级
+  priority: 'low' | 'medium' | 'high';
+  
+  // 状态
+  status: TaskStatus;
+  
+  // Agent 信息
+  agent?: {
+    name: string;
+    sessionId?: string;
+  };
+  
+  // 代码映射
+  codeMapping?: {
+    file?: string;
+    function?: string;
+    lineStart?: number;
+    lineEnd?: number;
+  };
+  
+  // 执行信息
+  execution?: {
+    startedAt?: number;
+    completedAt?: number;
+    duration?: number;
+    retryCount?: number;
+    error?: string;
+  };
+  
+  metadata?: Record<string, unknown>;
+  
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type TaskType = 
+  | 'create_file'       // 创建文件
+  | 'modify_file'       // 修改文件
+  | 'delete_file'       // 删除文件
+  | 'refactor'          // 重构
+  | 'test'              // 测试
+  | 'doc'               // 文档
+  | 'config'            // 配置
+  | 'deploy'            // 部署
+  | 'review'            // 代码审查
+  | 'analyze';          // 分析
+
+export type TaskStatus = 
+  | 'pending'           // 待处理
+  | 'queued'            // 已排队
+  | 'in_progress'       // 进行中
+  | 'blocked'           // 阻塞
+  | 'done'              // 完成
+  | 'failed'            // 失败
+  | 'cancelled';        // 取消
+
+// ==================== 通用节点类型 ====================
+
+/**
+ * 图谱节点 - 统一接口
+ */
+export type GraphNode = ModuleNode | FeatureNode | TaskNode;
+
+/**
+ * 获取节点类型
+ */
+export type NodeKind = 
+  | 'Module'
+  | 'SubModule'
+  | 'Feature'
+  | 'Task';
+
+/**
+ * 从节点获取种类
+ */
+export function getNodeKind(node: GraphNode): NodeKind {
+  if (isModuleNode(node)) return node.layer === 'L1_Module' ? 'Module' : 'SubModule';
+  if (isFeatureNode(node)) return 'Feature';
+  return 'Task';
+}
+
+/**
+ * 类型守卫
+ */
+export function isModuleNode(node: GraphNode): node is ModuleNode {
+  return node.layer === 'L1_Module' || node.layer === 'L2_SubModule';
+}
+
+export function isFeatureNode(node: GraphNode): node is FeatureNode {
+  return node.layer === 'L3_Feature';
+}
+
+export function isTaskNode(node: GraphNode): node is TaskNode {
+  return node.layer === 'L4_Task';
+}
+
+// ==================== 边定义 ====================
+
+export type EdgeType = 
+  | 'contains'          // 包含关系 (Module -> SubModule)
+  | 'implements'        // 实现关系 (Task -> Feature)
+  | 'requires'          // 依赖关系 (Module -> Module)
+  | 'related_to'        // 关联关系 (Feature -> Module)
+  | 'blocks'            // 阻塞关系 (Task -> Task)
+  | 'derived_from'      // 派生关系 (Task -> Task)
+  | 'references';       // 引用关系
 
 export interface EdgeData {
   id: string;
   from: string;
   to: string;
-  type: string;
+  type: EdgeType;
   label?: string;
   weight?: number;
+  metadata?: Record<string, unknown>;
 }
+
+// ==================== 图谱数据 ====================
 
 export interface GraphData {
   id: string;
   name: string;
   description?: string;
-  nodes: NodeData[];
+  
+  // 全局上下文 - 不是节点
+  context: ProjectContext;
+  
+  // 节点
+  nodes: GraphNode[];
+  
+  // 边
   edges: EdgeData[];
+  
+  // 元数据
   metadata?: Record<string, unknown>;
+  
+  // 版本
+  version: string;
+  
+  createdAt: number;
+  updatedAt: number;
 }
 
 // ==================== MCP 工具输入类型 ====================
@@ -46,8 +355,9 @@ export interface GraphData {
 export interface CreateGraphInput {
   name: string;
   description?: string;
-  initialNodes?: NodeData[];
-  initialEdges?: EdgeData[];
+  context: Partial<ProjectContext>;
+  initialModules?: Partial<ModuleNode>[];
+  initialFeatures?: Partial<FeatureNode>[];
 }
 
 export interface LoadGraphInput {
@@ -62,7 +372,7 @@ export interface ExportGraphInput {
 
 export interface AddNodeInput {
   graphId: string;
-  node: NodeData;
+  node: Partial<GraphNode>;
   parentId?: string;
   afterNodeId?: string;
 }
@@ -70,35 +380,23 @@ export interface AddNodeInput {
 export interface UpdateNodeInput {
   graphId: string;
   nodeId: string;
-  updates: Partial<NodeData>;
+  updates: Partial<GraphNode>;
 }
 
 export interface DeleteNodeInput {
   graphId: string;
   nodeId: string;
-  cascade?: boolean;  // 是否级联删除子节点
+  cascade?: boolean;
 }
 
 export interface AddEdgeInput {
   graphId: string;
-  edge: EdgeData;
+  edge: Partial<EdgeData>;
 }
 
-export interface AddOptionsInput {
+export interface UpdateContextInput {
   graphId: string;
-  nodeId: string;
-  options: ClarificationOption[];
-}
-
-export interface GetPendingClarificationsInput {
-  graphId: string;
-  nodeIds?: string[];
-}
-
-export interface TopologicalSortInput {
-  graphId: string;
-  layer?: LayerType;
-  includeDependencies?: boolean;
+  updates: Partial<ProjectContext>;
 }
 
 // ==================== 澄清系统类型 ====================
@@ -107,12 +405,12 @@ export interface ClarificationOption {
   id: string;
   label: string;
   description?: string;
-  implications?: string[];  // 选择此选项的影响
+  implications?: string[];
   selected?: boolean;
   disabled?: boolean;
-  cost?: 'low' | 'medium' | 'high';  // 成本
-  complexity?: 'simple' | 'moderate' | 'complex';  // 复杂度
-  time?: 'short' | 'medium' | 'long';  // 时间
+  cost?: 'low' | 'medium' | 'high';
+  complexity?: 'simple' | 'moderate' | 'complex';
+  time?: 'short' | 'medium' | 'long';
 }
 
 export interface ClarificationQuestion {
@@ -121,7 +419,7 @@ export interface ClarificationQuestion {
   question: string;
   options: ClarificationOption[];
   multiSelect?: boolean;
-  context?: string;  // 为什么需要问这个问题
+  context?: string;
   status: 'pending' | 'answered' | 'skipped';
 }
 
@@ -160,48 +458,60 @@ export interface ExportGraphOutput {
 }
 
 export interface AddNodeOutput {
-  node: NodeData;
-  edges: EdgeData[];  // 自动创建的边
+  node: GraphNode;
+  edges: EdgeData[];
 }
 
 export interface UpdateNodeOutput {
-  node: NodeData;
-  changes: string[];  // 变更的字段
+  node: GraphNode;
+  changes: string[];
 }
 
 export interface DeleteNodeOutput {
   deletedNodeId: string;
-  deletedEdges: string[];  // 删除的边 ID
-  cascadeDeleted?: string[];  // 级联删除的节点 ID
+  deletedEdges: string[];
+  cascadeDeleted?: string[];
 }
 
 export interface AddEdgeOutput {
   edge: EdgeData;
 }
 
-export interface AddOptionsOutput {
-  nodeId: string;
-  options: ClarificationOption[];
-  requiresClarification: boolean;
+export interface UpdateContextOutput {
+  context: ProjectContext;
+  changes: string[];
 }
 
-export interface GetPendingClarificationsOutput {
-  questions: ClarificationQuestion[];
-  total: number;
-  answered: number;
-  remaining: number;
+// ==================== 任务生成接口 ====================
+
+/**
+ * Agent 任务生成请求
+ */
+export interface TaskGenerationRequest {
+  graphId: string;
+  featureIds?: string[];  // 基于哪些功能生成任务
+  moduleId?: string;      // 指定模块
+  strategy?: 'top_down' | 'bottom_up' | 'dependency_first';
 }
 
-export interface TopologicalSortOutput {
-  layers: NodeData[][];  // 按层分组
-  flatOrder: string[];   // 节点 ID 的拓扑顺序
-  parallelizableLayers: number;  // 可并行的层数
-  totalNodes: number;
+/**
+ * Agent 任务生成结果
+ */
+export interface TaskGenerationResult {
+  tasks: TaskNode[];
+  dependencies: EdgeData[];
+  summary: {
+    total: number;
+    byType: Record<TaskType, number>;
+    byStatus: Record<TaskStatus, number>;
+    criticalPath?: string[];  // 关键路径
+  };
 }
 
 // ==================== 事件类型 ====================
 
 export type GraphEventType =
+  | 'context:update'
   | 'node:add'
   | 'node:update'
   | 'node:delete'
@@ -210,9 +520,11 @@ export type GraphEventType =
   | 'graph:update'
   | 'clarification:request'
   | 'clarification:answer'
-  | 'generation:start'
-  | 'generation:progress'
-  | 'generation:complete';
+  | 'task:generated'
+  | 'task:started'
+  | 'task:progress'
+  | 'task:completed'
+  | 'task:failed';
 
 export interface GraphEvent {
   type: GraphEventType;

@@ -1,0 +1,186 @@
+{
+  "timestamp": "2026-06-17T09:53:37.389Z",
+  "summary": {
+    "total": 35,
+    "passed": 35,
+    "failed": 0,
+    "passRate": "100.00%"
+  },
+  "results": [
+    {
+      "name": "Create L1 node",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Create L2 node",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Create L3 node",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Create L4 node",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Create L5 node",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Create edges between layers",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Verify 5 layers exist",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Query L3 nodes",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Query incoming edges",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Query outgoing edges",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Node templates module exists",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Node templates module is valid",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Start session",
+      "passed": true,
+      "duration": 1
+    },
+    {
+      "name": "Get session",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Generate questions",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Answer question",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "MCP - Create node",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "MCP - Update node",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "MCP - Delete node",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "MCP - Create edge",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "MCP - Delete edge",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "MCP - Query graph",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Graph reflects structure",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Edges represent dependencies",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Workflow - Epic to Stories",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Workflow - Impact analysis",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Workflow - Session management",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Prepare React Flow nodes",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Prepare React Flow edges",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Graph statistics",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Simulate node drag - update position",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Simulate node edit - update label",
+      "passed": true,
+      "duration": 1
+    },
+    {
+      "name": "Simulate delete node",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Simulate add child node",
+      "passed": true,
+      "duration": 0
+    },
+    {
+      "name": "Simulate search filter",
+      "passed": true,
+      "duration": 0
+    }
+  ]
+}

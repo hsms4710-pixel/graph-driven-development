@@ -284,6 +284,24 @@ export class GraphStore {
   }
   
   /**
+   * 获取图关联的最新会话
+   */
+  getLatestSession(graphId: string): ClarificationSession | undefined {
+    // 找到该图关联的最新会话
+    let latestSession: ClarificationSession | undefined;
+    let latestTime = 0;
+    
+    for (const session of this.sessions.values()) {
+      if (session.graphId === graphId && session.updatedAt > latestTime) {
+        latestTime = session.updatedAt;
+        latestSession = session;
+      }
+    }
+    
+    return latestSession;
+  }
+  
+  /**
    * 添加澄清问题
    */
   addClarificationQuestion(sessionId: string, question: {
