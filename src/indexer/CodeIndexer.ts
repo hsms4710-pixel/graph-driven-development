@@ -758,35 +758,128 @@ export class CodeIndexer {
     return symbols;
   }
   
-  private extractPythonSymbols(content: string): { name: string; kind: string; startLine: number; endLine: number }[] {
-    const symbols: { name: string; kind: string; startLine: number; endLine: number }[] = [];
+  private extractPythonSymbols(content: string): { name: string; kind: string; startLine: number; endLine: number; decorators?: string[]; isAsync?: boolean }[] {
+    const symbols: { name: string; kind: string; startLine: number; endLine: number; decorators?: string[]; isAsync?: boolean }[] = [];
     const lines = content.split('\n');
     
     const funcRegex = /^def\s+(\w+)/;
+    const asyncFuncRegex = /^async\s+def\s+(\w+)/;
     const classRegex = /^class\s+(\w+)/;
     
+    let currentFunc: { name: string; startLine: number; decorators: string[]; isAsync: boolean } | null = null;
+    let currentClass: { name: string; startLine: number; endLine: number } | null = null;
+    let braceDepth = 0;
+    let inFunction = false;
+    
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
+      const line = lines[i];
+      const trimmed = line.trim();
       
-      const funcMatch = line.match(funcRegex);
-      if (funcMatch) {
-        symbols.push({
+      // 解析装饰器
+      const decoratorMatch = trimmed.match(/^@([\w\.]+)/);
+      if (decoratorMatch && currentFunc) {
+        currentFunc.decorators.push(decoratorMatch[1]);
+        continue;
+      }
+      
+      // 解析 async 函数
+      const asyncFuncMatch = trimmed.match(asyncFuncRegex);
+      if (asyncFuncMatch) {
+        if (currentFunc) {
+          // 保存之前的函数
+          symbols.push({
+            name: currentFunc.name,
+            kind: 'function',
+            startLine: currentFunc.startLine,
+            endLine: currentFunc.startLine, // 将在后面更新
+            decorators: currentFunc.decorators.length > 0 ? currentFunc.decorators : undefined,
+            isAsync: false
+          });
+        }
+        
+        currentFunc = {
+          name: asyncFuncMatch[1],
+          startLine: i + 1,
+          decorators: [],
+          isAsync: true
+        };
+      }
+      
+      // 解析普通函数
+      const funcMatch = trimmed.match(funcRegex);
+      if (funcMatch && !asyncFuncMatch) {
+        if (currentFunc) {
+          symbols.push({
+            name: currentFunc.name,
+            kind: 'function',
+            startLine: currentFunc.startLine,
+            endLine: currentFunc.startLine,
+            decorators: currentFunc.decorators.length > 0 ? currentFunc.decorators : undefined,
+            isAsync: false
+          });
+        }
+        
+        currentFunc = {
           name: funcMatch[1],
-          kind: 'function',
           startLine: i + 1,
-          endLine: i + 1
-        });
+          decorators: [],
+          isAsync: false
+        };
       }
       
-      const classMatch = line.match(classRegex);
+      // 解析类
+      const classMatch = trimmed.match(classRegex);
       if (classMatch) {
-        symbols.push({
+        if (currentClass) {
+          symbols.push({
+            name: currentClass.name,
+            kind: 'class',
+            startLine: currentClass.startLine,
+            endLine: currentClass.endLine
+          });
+        }
+        
+        currentClass = {
           name: classMatch[1],
-          kind: 'class',
           startLine: i + 1,
           endLine: i + 1
-        });
+        };
       }
+      
+      // 更新函数结束行
+      if (currentFunc && !currentFunc.isAsync) {
+        // 简单的函数结束检测
+        if (trimmed === '' || trimmed.startsWith('#')) {
+          // 空行或注释，可能是函数结束
+        }
+      }
+      
+      // 更新类结束行
+      if (currentClass) {
+        currentClass.endLine = i + 1;
+      }
+    }
+    
+    // 保存最后一个函数
+    if (currentFunc) {
+      symbols.push({
+        name: currentFunc.name,
+        kind: 'function',
+        startLine: currentFunc.startLine,
+        endLine: lines.length,
+        decorators: currentFunc.decorators.length > 0 ? currentFunc.decorators : undefined,
+        isAsync: false
+      });
+    }
+    
+    // 保存最后一个类
+    if (currentClass) {
+      symbols.push({
+        name: currentClass.name,
+        kind: 'class',
+        startLine: currentClass.startLine,
+        endLine: currentClass.endLine
+      });
     }
     
     return symbols;
