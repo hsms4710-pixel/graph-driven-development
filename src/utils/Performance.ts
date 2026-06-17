@@ -374,4 +374,20 @@ export class LRUCache<T, K = string> {
     
     return true;
   }
+  
+  /**
+   * 获取缓存条目
+   */
+  entries(): IterableIterator<[K, CacheEntry<T>]> {
+    return this.cache.entries();
+  }
+  
+  /**
+   * 获取内存使用量（估算）
+   */
+  memoryUsage(): number {
+    // 估算每个条目的平均大小（键 + 值 + 元数据）
+    const avgEntrySize = 200; // 估算值
+    return this.cache.size * avgEntrySize;
+  }
 }
