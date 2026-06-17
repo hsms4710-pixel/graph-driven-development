@@ -10,7 +10,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import crypto from 'crypto';
-import { LRUCache } from '../utils/Performance';
 
 // ==================== 类型定义 ====================
 
@@ -39,17 +38,21 @@ export interface IncrementalIndexResult {
   indexTime: number;
 }
 
+interface CacheWrapper<T> {
+  value: T;
+}
+
 // ==================== 增量索引器 ====================
 
 export class IncrementalIndexer {
-  private cache: LRUCache<string, FileCacheEntry>;
+  private cache: Map<string, FileCacheEntry>;
   private projectPath: string;
   private cacheFile: string;
   
   constructor(projectPath: string, cacheFile?: string) {
     this.projectPath = path.resolve(projectPath);
     this.cacheFile = cacheFile || path.join(this.projectPath, '.gdd-cache.json');
-    this.cache = new LRUCache<string, FileCacheEntry>(10000); // 最多缓存 10000 个文件
+    this.cache = new Map<string, FileCacheEntry>();
     
     this.loadCache();
   }
@@ -63,11 +66,11 @@ export class IncrementalIndexer {
         const content = fs.readFileSync(this.cacheFile, 'utf-8');
         const cacheData: IndexCache = JSON.parse(content);
         
-        for (const [key, entry] of Object.entries(cacheData.files)) {
+        for (const [key, entry] of cacheData.files) {
           this.cache.set(key, entry);
         }
         
-        console.log(`[IncrementalIndexer] Loaded cache: ${cacheData.files.size} entries`);
+        console.log(`[IncrementalIndexer] Loaded cache: ${this.cache.size} entries`);
       }
     } catch (error) {
       console.warn('[IncrementalIndexer] Failed to load cache, starting fresh');
@@ -84,11 +87,11 @@ export class IncrementalIndexer {
         version: '1.0',
         projectPath: this.projectPath,
         lastIndexTime: Date.now(),
-        files: new Map(this.cache.entries())
+        files: this.cache
       };
       
       fs.writeFileSync(this.cacheFile, JSON.stringify(cacheData, null, 2));
-      console.log(`[IncrementalIndexer] Saved cache: ${cacheData.files.size} entries`);
+      console.log(`[IncrementalIndexer] Saved cache: ${this.cache.size} entries`);
     } catch (error) {
       console.warn('[IncrementalIndexer] Failed to save cache');
     }
@@ -109,65 +112,54 @@ export class IncrementalIndexer {
   /**
    * 获取文件状态
    */
-  private getFileStatus(filePath: string): { exists: boolean; mtime: number; size: number } {
+  private getFileStatus(filePath: string): { mtime: number; size: number } | null {
     try {
       const stats = fs.statSync(filePath);
       return {
-        exists: true,
         mtime: stats.mtimeMs,
         size: stats.size
       };
     } catch {
-      return { exists: false, mtime: 0, size: 0 };
+      return null;
     }
   }
   
   /**
-   * 扫描项目文件
+   * 收集所有文件
    */
-  private scanFiles(): Map<string, { exists: boolean; mtime: number; size: number }> {
-    const files = new Map<string, { exists: boolean; mtime: number; size: number }>();
+  private collectFiles(): Map<string, { mtime: number; size: number }> {
+    const files = new Map<string, { mtime: number; size: number }>();
     
-    const scanDir = (dirPath: string) => {
-      try {
-        const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    const walkDir = (dir: string, relativePath: string = ''): void => {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        const relPath = relativePath ? path.join(relativePath, entry.name) : entry.name;
         
-        for (const entry of entries) {
-          // 跳过隐藏目录和常见排除目录
-          if (entry.name.startsWith('.') || 
-              entry.name === 'node_modules' || 
-              entry.name === '__pycache__' ||
-              entry.name === 'venv' ||
-              entry.name === 'dist' ||
-              entry.name === 'build') {
+        if (entry.isDirectory()) {
+          // 跳过隐藏目录和 node_modules
+          if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'dist') {
             continue;
           }
+          walkDir(fullPath, relPath);
+        } else if (entry.isFile()) {
+          // 只索引代码文件
+          const ext = path.extname(entry.name).toLowerCase();
+          const allowedExts = ['.ts', '.tsx', '.js', '.jsx', '.py', '.go', '.java', '.rb', '.php', '.vue', '.svelte'];
           
-          const fullPath = path.join(dirPath, entry.name);
-          
-          if (entry.isDirectory()) {
-            scanDir(fullPath);
-          } else if (entry.isFile() && this.isSupportedFile(entry.name)) {
-            const relativePath = path.relative(this.projectPath, fullPath);
-            files.set(relativePath, this.getFileStatus(fullPath));
+          if (allowedExts.includes(ext)) {
+            const status = this.getFileStatus(fullPath);
+            if (status) {
+              files.set(relPath, status);
+            }
           }
         }
-      } catch {
-        // 忽略读取错误
       }
     };
     
-    scanDir(this.projectPath);
+    walkDir(this.projectPath);
     return files;
-  }
-  
-  /**
-   * 检查是否是支持的文件类型
-   */
-  private isSupportedFile(filename: string): boolean {
-    const supportedExtensions = ['.ts', '.tsx', '.js', '.jsx', '.py', '.go', '.rs'];
-    const ext = path.extname(filename).toLowerCase();
-    return supportedExtensions.includes(ext);
   }
   
   /**
@@ -176,8 +168,10 @@ export class IncrementalIndexer {
   async incrementalIndex(): Promise<IncrementalIndexResult> {
     const startTime = Date.now();
     
-    // 扫描当前文件
-    const currentFiles = this.scanFiles();
+    // 收集当前文件状态
+    const currentFiles = this.collectFiles();
+    
+    // 获取缓存的文件
     const cachedFiles = new Map(this.cache.entries());
     
     const added: string[] = [];
@@ -293,25 +287,17 @@ export class IncrementalIndexer {
     try {
       if (fs.existsSync(this.cacheFile)) {
         fs.unlinkSync(this.cacheFile);
+        console.log('[IncrementalIndexer] Cache cleared');
       }
-    } catch {
-      // 忽略删除错误
+    } catch (error) {
+      console.warn('[IncrementalIndexer] Failed to clear cache file');
     }
-    
-    console.log('[IncrementalIndexer] Cache cleared');
   }
   
   /**
-   * 获取缓存统计
+   * 获取缓存大小
    */
-  getCacheStats(): { size: number; memoryUsage: number } {
-    return {
-      size: this.cache.size(),
-      memoryUsage: this.cache.memoryUsage()
-    };
+  getCacheSize(): number {
+    return this.cache.size;
   }
 }
-
-// ==================== 导出 ====================
-
-export default IncrementalIndexer;
