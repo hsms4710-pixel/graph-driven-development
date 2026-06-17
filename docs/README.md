@@ -2,30 +2,59 @@
 
 面向 Coding Agents 的图驱动开发工具。
 
-## 快速开始
+[![Version](https://img.shields.io/badge/version-2.0.0-blue)]()
+[![Tests](https://img.shields.io/badge/tests-56%2F56-green)]()
+[![License](https://img.shields.io/badge/license-MIT-orange)]()
 
-### 安装
+## 📖 文档
+
+- [快速开始](./QUICKSTART.md) - 5 分钟上手
+- [API 参考](./API_REFERENCE.md) - MCP 工具和 API 详细说明
+- [架构设计](./ARCHITECTURE.md) - 系统架构和扩展指南
+- [MCP 工具参考](./MCP_TOOLS_REFERENCE.md) - 18 个 MCP 工具详解
+- [Agent 集成](./AGENT_INTEGRATION.md) - 如何与 Agent 集成
+- [开发路线图](./ROADMAP.md) - 项目规划和进度
+
+## 🎯 核心特性
+
+- 🎯 **5 层节点架构**: L1 Constitution → L2 TechStack → L3 Epic → L4 Story → L5 Task
+- 🔧 **MCP Server**: 18 个工具供 Agent 调用（12 基础 + 6 智能）
+- 🧠 **智能 Brainstorm**: 上下文感知的问题生成，10+ Python 框架检测
+- 📊 **代码索引**: 支持 TypeScript、JavaScript、Python、Go、Java
+- 🌐 **多平台支持**: Claude Code、Codex CLI、CodeBuddy、TRAE
+- ☁️ **平台集成**: CI/CD、云服务、数据库、监控配置生成
+
+## 🚀 快速开始
 
 ```bash
+# 安装依赖
 npm install
-npm run build
-```
 
-### 启动开发服务器
-
-```bash
+# 启动开发服务器
 npm run dev
+
+# 构建
+npm run build
+
+# 启动 MCP Server
+npm run mcp
+
+# 运行测试
+npx ts-node test/v2.0-test.ts
 ```
 
 访问 http://localhost:5173
 
-### 启动 MCP Server
+## 📊 项目状态
 
-```bash
-npm run mcp
-```
+| 指标 | 数值 |
+|------|------|
+| 代码行数 | 18,000+ |
+| 测试通过 | 56/56 (100%) |
+| 模块数量 | 16 |
+| 编译错误 | 0 |
 
-## 核心概念
+## 📐 核心概念
 
 ### 5 层节点架构
 
@@ -54,9 +83,18 @@ GDD 提供 18 个 MCP 工具供 Agent 调用：
 | 基础工具 | 12 | 图谱 CRUD、节点操作 |
 | 智能工具 | 6 | Brainstorm、上下文分析 |
 
-详见 [MCP_TOOLS_REFERENCE.md](./MCP_TOOLS_REFERENCE.md)
+详见 [API_REFERENCE.md](./API_REFERENCE.md)
 
-## 支持的项目类型
+### 平台集成
+
+| 模块 | 支持平台 |
+|------|----------|
+| CI/CD | GitHub Actions, GitLab CI, Jenkins |
+| 云服务 | AWS, Azure, GCP, 腾讯云, 阿里云 |
+| 数据库 | Prisma, Drizzle, SQL, TypeORM |
+| 监控 | Prometheus, Grafana, OpenTelemetry |
+
+## 📁 支持的项目类型
 
 | 语言 | 框架 | 置信度 |
 |------|------|--------|
@@ -65,7 +103,7 @@ GDD 提供 18 个 MCP 工具供 Agent 调用：
 | JavaScript | Express, React, Vue | 90%+ |
 | Go | Gin, Echo, Fiber | 80%+ |
 
-## 使用场景
+## 💡 使用场景
 
 ### 场景 1: 新项目开发
 
@@ -83,14 +121,15 @@ GDD 提供 18 个 MCP 工具供 Agent 调用：
 4. 识别技术债务
 5. 规划重构任务
 
-### 场景 3: 团队协作
+### 场景 3: CI/CD 配置生成
 
-1. 导出图谱为 JSON
-2. 提交到版本控制
-3. 团队成员导入
-4. 共同维护项目结构
+1. 分析项目结构
+2. 选择目标平台
+3. 生成 CI/CD 配置
+4. 生成云服务配置
+5. 生成监控配置
 
-## 配置
+## 🔧 配置
 
 ### MCP Server 配置
 
@@ -116,24 +155,10 @@ GDD 支持以下 Agent 平台：
 
 详见 [AGENT_INTEGRATION.md](./AGENT_INTEGRATION.md)
 
-## 常见问题
+## 🌐 在线体验
 
-### Q: 如何处理大型项目？
+[部署预览](https://c39ff7e85ae84a6d98e043da78cd0b83.tc-nanjing.share.codebuddy.woa.com)
 
-A: 使用增量索引功能，只索引变更的文件。详见 V1.4 性能优化。
-
-### Q: 支持哪些框架？
-
-A: 详见 [MCP_TOOLS_REFERENCE.md](./MCP_TOOLS_REFERENCE.md) 中的框架支持列表。
-
-### Q: 如何导出图谱？
-
-A: 在 Web UI 中点击"导出"按钮，或使用 MCP 工具 `gdd_export_graph`。
-
-## 路线图
-
-详见 [ROADMAP.md](./ROADMAP.md)
-
-## 许可证
+## 📝 License
 
 MIT
