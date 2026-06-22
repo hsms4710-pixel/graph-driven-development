@@ -21,6 +21,7 @@ import {
 import { SmartQuestionGenerator, SmartGeneratorConfig } from './SmartQuestionGenerator';
 import { ContextAnalyzer, ProjectContext } from './ContextAnalyzer';
 import { graphStore } from '../mcp/GraphStore';
+import { EdgeData } from '../mcp/types';
 import { CodeIndexResult } from '../indexer/types';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -739,18 +740,8 @@ export class SmartBrainstormEngine {
     type: string;
     layer: string;
     properties: Record<string, unknown>;
-  }>): Array<{
-    id: string;
-    from: string;
-    to: string;
-    type: string;
-  }> {
-    const edges: Array<{
-      id: string;
-      from: string;
-      to: string;
-      type: string;
-    }> = [];
+  }>): EdgeData[] {
+    const edges: EdgeData[] = [];
     
     const layerDependencies: Record<string, string[]> = {
       'L2_TechStack': ['L1_Constitution'],

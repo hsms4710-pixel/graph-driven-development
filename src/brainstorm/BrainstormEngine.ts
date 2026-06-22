@@ -14,7 +14,7 @@ import {
   BrainstormEvent,
   BrainstormEventType,
 } from './types';
-import { NodeData } from '../mcp/types';
+import { EdgeData, NodeData } from '../mcp/types';
 import { QuestionGenerator } from './QuestionGenerator';
 import { graphStore } from '../mcp/GraphStore';
 
@@ -485,18 +485,8 @@ export class BrainstormEngine {
     type: string;
     layer: string;
     properties: Record<string, unknown>;
-  }>): Array<{
-    id: string;
-    from: string;
-    to: string;
-    type: string;
-  }> {
-    const edges: Array<{
-      id: string;
-      from: string;
-      to: string;
-      type: string;
-    }> = [];
+  }>): EdgeData[] {
+    const edges: EdgeData[] = [];
     
     // 定义层级依赖关系
     const layerDependencies: Record<string, string[]> = {

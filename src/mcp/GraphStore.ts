@@ -55,6 +55,20 @@ export class GraphStore {
       description: data.description,
       nodes: data.nodes || [],
       edges: data.edges || [],
+      context: {
+        id: `ctx_${id}`,
+        name: data.name,
+        description: data.description,
+        goals: [],
+        principles: [],
+        constraints: [],
+        domain: {},
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      },
+      version: '1.0',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
       metadata: {
         createdAt: Date.now(),
         updatedAt: Date.now(),

@@ -22,5 +22,9 @@
     }
   },
   "include": ["src"],
+  "exclude": [
+    "src/mcp/http-server.ts",
+    "src/mcp/server-enhanced.ts"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

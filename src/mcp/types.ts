@@ -307,12 +307,28 @@ export function isTaskNode(node: GraphNode): node is TaskNode {
 
 export type EdgeType = 
   | 'contains'          // 包含关系 (Module -> SubModule)
+  | 'depends_on'        // 旧版依赖关系
   | 'implements'        // 实现关系 (Task -> Feature)
   | 'requires'          // 依赖关系 (Module -> Module)
   | 'related_to'        // 关联关系 (Feature -> Module)
   | 'blocks'            // 阻塞关系 (Task -> Task)
   | 'derived_from'      // 派生关系 (Task -> Task)
   | 'references';       // 引用关系
+
+// ==================== Legacy compatibility types ====================
+
+export interface NodeData {
+  id: string;
+  label: string;
+  type: string;
+  layer: string;
+  properties: Record<string, any>;
+  status?: string;
+  position?: { x: number; y: number };
+  metadata?: Record<string, unknown>;
+  createdAt?: number;
+  updatedAt?: number;
+}
 
 export interface EdgeData {
   id: string;
@@ -332,10 +348,10 @@ export interface GraphData {
   description?: string;
   
   // 全局上下文 - 不是节点
-  context: ProjectContext;
+  context?: ProjectContext;
   
   // 节点
-  nodes: GraphNode[];
+  nodes: NodeData[];
   
   // 边
   edges: EdgeData[];
@@ -344,10 +360,10 @@ export interface GraphData {
   metadata?: Record<string, unknown>;
   
   // 版本
-  version: string;
-  
-  createdAt: number;
-  updatedAt: number;
+  version?: string;
+
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 // ==================== MCP 工具输入类型 ====================
@@ -355,7 +371,9 @@ export interface GraphData {
 export interface CreateGraphInput {
   name: string;
   description?: string;
-  context: Partial<ProjectContext>;
+  context?: Partial<ProjectContext>;
+  initialNodes?: NodeData[];
+  initialEdges?: EdgeData[];
   initialModules?: Partial<ModuleNode>[];
   initialFeatures?: Partial<FeatureNode>[];
 }
@@ -372,7 +390,7 @@ export interface ExportGraphInput {
 
 export interface AddNodeInput {
   graphId: string;
-  node: Partial<GraphNode>;
+  node: NodeData;
   parentId?: string;
   afterNodeId?: string;
 }
@@ -380,7 +398,7 @@ export interface AddNodeInput {
 export interface UpdateNodeInput {
   graphId: string;
   nodeId: string;
-  updates: Partial<GraphNode>;
+  updates: Partial<NodeData>;
 }
 
 export interface DeleteNodeInput {
@@ -391,7 +409,31 @@ export interface DeleteNodeInput {
 
 export interface AddEdgeInput {
   graphId: string;
-  edge: Partial<EdgeData>;
+  edge: EdgeData;
+}
+
+export interface AddOptionsInput {
+  graphId: string;
+  nodeId: string;
+  options: ClarificationOption[];
+}
+
+export interface GetPendingClarificationsInput {
+  graphId: string;
+  nodeIds?: string[];
+}
+
+export interface TopologicalSortInput {
+  graphId: string;
+  layer?: string;
+  includeDependencies?: boolean;
+}
+
+export interface TopologicalSortOutput {
+  layers: NodeData[][];
+  flatOrder: string[];
+  parallelizableLayers: number;
+  totalNodes: number;
 }
 
 export interface UpdateContextInput {
